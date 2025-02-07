@@ -1,37 +1,69 @@
-export const getProductScore = async (event: any = {}): Promise<any> => {
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { validateAmazonUrl } from './validate-amazon-url';
+import { fetchProductData } from './fetch-product-data';
+import { calculateSustainabilityScore } from './calculate-sustainability-score';
+
+export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
-    // Validate input
     const url = event.queryStringParameters?.url;
-    if (!url || typeof url !== 'string') {
+
+    if (!url || typeof url !== 'string' || !validateAmazonUrl(url)) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: 'Invalid or missing URL parameter' }),
+        body: JSON.stringify({ 
+          message: 'Invalid Amazon product URL',
+          details: {
+            urlType: typeof url,
+            urlValue: url,
+            fullQueryParams: event.queryStringParameters
+          }
+        })
       };
     }
 
-    // Placeholder: Retrieve sustainability score using the URL
-    // This will be implemented later
-    const sustainabilityScore = await getSustainabilityScoreFromAPI(url);
+    try {
+      const productData = await fetchProductData(url);
+      const sustainabilityScore = calculateSustainabilityScore(productData);
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        url,
-        sustainabilityScore,
-        message: 'Sustainability score retrieved successfully',
-      }),
-    };
-  } catch (error) {
-    console.error('Error processing request:', error);
+      return {
+        statusCode: 200,
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Access-Control-Allow-Origin': '*' 
+        },
+        body: JSON.stringify({ 
+          productData, 
+          sustainabilityScore 
+        })
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      return {
+        statusCode: 500,
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Access-Control-Allow-Origin': '*' 
+        },
+        body: JSON.stringify({ 
+          message: 'Error fetching product data', 
+          error: errorMessage 
+        })
+      };
+    }
+  } catch (topLevelError: unknown) {
+    const errorMessage = topLevelError instanceof Error ? topLevelError.message : 'Unknown error';
+    
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Internal Server Error' }),
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Access-Control-Allow-Origin': '*' 
+      },
+      body: JSON.stringify({ 
+        message: 'Critical error processing request', 
+        error: errorMessage 
+      })
     };
   }
 };
-
-// Placeholder function for retrieving the sustainability score
-async function getSustainabilityScoreFromAPI(url: string): Promise<number> {
-  // Implementation will be added later
-  return Math.random() * 100; // Dummy score for now
-}
