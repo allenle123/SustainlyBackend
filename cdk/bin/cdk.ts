@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { ApiStack } from '../lib/api-stack';
-import { LambdaStack } from '../lib/lambda-stack';
 import { DynamoDBStack } from '../lib/dynamodb-stack';
+import { LambdaStack } from '../lib/lambda-stack';
+import { ApiStack } from '../lib/api-stack';
 
 const app = new cdk.App();
 
+// Create DynamoDB stack
 const dynamoDBStack = new DynamoDBStack(app, 'SustainlyDynamoDBStack', {
   env: { 
     account: process.env.CDK_DEFAULT_ACCOUNT, 
@@ -14,6 +15,7 @@ const dynamoDBStack = new DynamoDBStack(app, 'SustainlyDynamoDBStack', {
   }
 });
 
+// Create Lambda stack with DynamoDB table
 const lambdaStack = new LambdaStack(app, 'SustainlyLambdaStack', {
   env: { 
     account: process.env.CDK_DEFAULT_ACCOUNT, 
@@ -22,7 +24,8 @@ const lambdaStack = new LambdaStack(app, 'SustainlyLambdaStack', {
   dynamoDBTable: dynamoDBStack.table
 });
 
-const apiStack = new ApiStack(app, 'SustainlyApiStack', {
+// Create API Gateway stack
+new ApiStack(app, 'SustainlyApiStack', {
   env: { 
     account: process.env.CDK_DEFAULT_ACCOUNT, 
     region: process.env.CDK_DEFAULT_REGION 

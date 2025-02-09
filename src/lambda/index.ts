@@ -1,6 +1,13 @@
+import * as dotenv from 'dotenv';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load environment variables from .env file
+config({ path: resolve(__dirname, '../../.env') });
+
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { getProductScore } from './features/product-score';
-import { getAlternativeProducts } from './features/get-alternative-products';
+import { getProductScore } from './features/product-score/product-score-handler';
+import { getAlternativeProducts } from './features/product-score/get-alternative-products';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {

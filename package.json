@@ -22,9 +22,11 @@
   "author": "Sustainly Team",
   "license": "MIT",
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1692.0",
-    "axios": "^1.6.7"
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.147",

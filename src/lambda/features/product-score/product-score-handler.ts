@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { validateAmazonUrl } from './validate-amazon-url';
-import { fetchProductData } from './fetch-product-data';
-import { calculateSustainabilityScore } from './calculate-sustainability-score';
+import { validateAmazonUrl } from './url-validator';
+import { fetchProductData } from './product-data-fetcher';
+import { calculateSustainabilityScore } from './sustainability-calculator';
 
 export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -23,7 +23,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
 
     try {
       const productData = await fetchProductData(url);
-      const sustainabilityScore = calculateSustainabilityScore(productData);
+      const { score, attributes, reasoning } = await calculateSustainabilityScore(productData);
 
       return {
         statusCode: 200,
@@ -33,7 +33,9 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
         },
         body: JSON.stringify({ 
           productData, 
-          sustainabilityScore 
+          sustainabilityScore: score,
+          sustainabilityAttributes: attributes,
+          sustainabilityReasoning: reasoning
         })
       };
     } catch (error: unknown) {
@@ -46,8 +48,16 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
           'Access-Control-Allow-Origin': '*' 
         },
         body: JSON.stringify({ 
-          message: 'Error fetching product data', 
-          error: errorMessage 
+          message: 'Error processing product data', 
+          error: errorMessage,
+          sustainabilityScore: 50,
+          sustainabilityAttributes: {
+            brand: 'Unknown',
+            categories: [],
+            sustainabilityKeywords: [],
+            materialFeatures: []
+          },
+          sustainabilityReasoning: 'Unable to generate sustainability assessment'
         })
       };
     }
@@ -62,7 +72,15 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
       },
       body: JSON.stringify({ 
         message: 'Critical error processing request', 
-        error: errorMessage 
+        error: errorMessage,
+        sustainabilityScore: 50,
+        sustainabilityAttributes: {
+          brand: 'Unknown',
+          categories: [],
+          sustainabilityKeywords: [],
+          materialFeatures: []
+        },
+        sustainabilityReasoning: 'Unable to generate sustainability assessment'
       })
     };
   }
