@@ -10,55 +10,11 @@ if (!GEMINI_API_KEY) {
 
 // Initialize Gemini AI client
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-export interface SustainabilityAttributes {
-  brand: string;
-  categories: string[];
-  sustainabilityKeywords: string[];
-  materialFeatures: string[];
-}
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 export interface SustainabilityAssessment {
   score: number;
-  attributes: SustainabilityAttributes;
   reasoning?: string;
-}
-
-export function extractSustainabilityAttributes(productData: SustainableProductData): SustainabilityAttributes {
-  // Predefined sustainability-related keywords
-  const sustainabilityKeywords = [
-    'eco', 'sustainable', 'green', 'recycled', 
-    'organic', 'biodegradable', 'renewable',
-    'responsibly sourced', 'environmentally friendly'
-  ];
-
-  // Extract relevant attributes
-  const attributes: SustainabilityAttributes = {
-    brand: productData.brand,
-    categories: productData.categories,
-    sustainabilityKeywords: [],
-    materialFeatures: []
-  };
-
-  // Check for sustainability keywords in title, description, and feature bullets
-  const searchText = [
-    productData.title.toLowerCase(),
-    productData.description.toLowerCase(),
-    ...productData.featureBullets.map(b => b.toLowerCase())
-  ].join(' ');
-
-  // Find matching sustainability keywords
-  attributes.sustainabilityKeywords = sustainabilityKeywords
-    .filter(keyword => searchText.includes(keyword.toLowerCase()));
-
-  // Extract material features that might indicate sustainability
-  attributes.materialFeatures = [
-    ...productData.attributes.material,
-    ...productData.attributes.specialFeatures
-  ];
-
-  return attributes;
 }
 
 export async function calculateSustainabilityScore(productData: SustainableProductData): Promise<SustainabilityAssessment> {
@@ -70,40 +26,47 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
     // Basic validation of product data
     if (!productData || Object.keys(productData).length === 0) {
       return {
-        score: 50,
-        attributes: {
-          brand: 'Unknown',
-          categories: [],
-          sustainabilityKeywords: [],
-          materialFeatures: []
-        }
+        score: 50
       };
     }
 
-    // Extract sustainability attributes
-    const attributes = extractSustainabilityAttributes(productData);
-
     // Prepare prompt for Gemini
     const prompt = `
-      Evaluate the sustainability of this product based on the following details:
+      Evaluate the sustainability of this product based on the following comprehensive details:
       
-      Product Title: ${productData.title}
-      Brand: ${productData.brand}
+      Product Information:
+      - Title: ${productData.title}
+      - Brand: ${productData.brand}
+      - Product URL: ${productData.productUrl}
+      
       Categories: ${productData.categories.join(', ')}
-      Rating: ${productData.rating.overall} (${productData.rating.totalRatings} reviews)
       
+      Ratings:
+      - Overall Rating: ${productData.rating.overall}/5
+      - Total Reviews: ${productData.rating.totalRatings}
+      
+      Product Specifications:
+      ${productData.specifications.map(spec => `- ${spec.name}: ${spec.value}`).join('\n')}
+      
+      Feature Highlights:
+      ${productData.featureBullets.map((bullet, index) => `${index + 1}. ${bullet}`).join('\n')}
+      
+      Product Description:
+      ${productData.description}
+      
+      Sustainability Assessment Criteria:
       Provide a sustainability score from 0-100 and brief reasoning. 
       Consider factors like:
-      - Materials used
+      - Materials used (environmental impact, recyclability)
       - Manufacturing process
       - Energy efficiency
-      - Recyclability
-      - Environmental impact
       - Product longevity
+      - Potential for reuse or recycling
+      - Environmental certifications or standards
       
       Output format:
       Score: [0-100 number]
-      Reasoning: [Brief explanation]
+      Reasoning: [Brief explanation highlighting key sustainability factors]
     `;
 
     console.log('Gemini Prompt:', prompt);
@@ -141,15 +104,13 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
         fullError: JSON.stringify(apiError, Object.getOwnPropertyNames(apiError))
       });
 
-      // Fallback scoring based on attributes
+      // Fallback scoring
       const baseScore = 50;
       const scoreBoost = 
-        (attributes.sustainabilityKeywords.length * 5) + 
         (productData.rating.overall >= 4.5 ? 10 : 0);
 
       return {
         score: Math.min(baseScore + scoreBoost, 100),
-        attributes,
         reasoning: apiError.name === 'AbortError' 
           ? 'Sustainability assessment timed out' 
           : `Fallback scoring due to API error: ${apiError.message || 'Unknown error'}`
@@ -172,7 +133,6 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
 
     return {
       score: Math.min(Math.max(score, 0), 100),
-      attributes,
       reasoning
     };
   } catch (error: any) {
@@ -191,12 +151,6 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
     // Fallback response
     return {
       score: 50,
-      attributes: {
-        brand: productData.brand,
-        categories: productData.categories,
-        sustainabilityKeywords: [],
-        materialFeatures: []
-      },
       reasoning: error.name === 'AbortError' 
         ? 'Sustainability assessment timed out' 
         : `Unable to generate sustainability assessment: ${error.message || 'Unexpected error'}`

@@ -9,17 +9,21 @@ if (!RAINFOREST_API_KEY) {
 
 const RAINFOREST_BASE_URL = 'https://api.rainforestapi.com';
 
+// Define specification interface
+export interface ProductSpecification {
+  name: string;
+  value: string;
+}
+
 export interface SustainableProductData {
+  productId: string;
   title: string;
   brand: string;
-  description: string;
+  productUrl: string;
+  specifications: ProductSpecification[];
   categories: string[];
-  attributes: {
-    material: string[];
-    specialFeatures: string[];
-    recommendedUses: string[];
-  };
   featureBullets: string[];
+  description: string;
   rating: {
     overall: number;
     totalRatings: number;
@@ -48,7 +52,7 @@ async function rainforestApiCall(url: string) {
       method: 'get',
       url: `${RAINFOREST_BASE_URL}/request`,
       params,
-      timeout: 15000, // Increased timeout as per previous change
+      timeout: 25000, // Increased timeout as per previous change
       headers: {
         'User-Agent': 'SustainLy/1.0',
         'Accept': 'application/json'
@@ -94,56 +98,40 @@ export async function fetchProductData(url: string): Promise<SustainableProductD
     const response = await rainforestApiCall(url);
     
     // Extract only sustainability-relevant information
+    const productData = response;
+
     return {
-      title: response.title || 'Unknown Product',
-      brand: response.brand || 'Unknown Brand',
-      description: response.description || '',
-      
-      // Extract meaningful categories
-      categories: response.categories
+      productId: productData.asin || '',
+      title: productData.title || '',
+      brand: extractBrand(productData.specifications) || '',
+      productUrl: productData.link || url,
+      specifications: productData.specifications || [],
+      categories: productData.categories
         ?.map((cat: any) => cat.name)
         .filter((name: string) => 
           name && 
           !['All Departments'].includes(name)
         ) || [],
-      
-      // Extract relevant attributes
-      attributes: {
-        material: response.attributes
-          ?.filter((attr: any) => 
-            ['Material', 'Material Feature'].includes(attr.name)
-          )
-          .map((attr: any) => attr.value) || [],
-        
-        specialFeatures: response.attributes
-          ?.filter((attr: any) => 
-            attr.name === 'Special Feature'
-          )
-          .map((attr: any) => attr.value) || [],
-        
-        recommendedUses: response.attributes
-          ?.filter((attr: any) => 
-            attr.name === 'Recommended Uses For Product'
-          )
-          .map((attr: any) => attr.value) || []
-      },
-      
-      // Extract feature bullets related to sustainability
-      featureBullets: response.feature_bullets
-        ?.filter((bullet: string) => 
-          bullet.toLowerCase().includes('sustainable') || 
-          bullet.toLowerCase().includes('eco') || 
-          bullet.toLowerCase().includes('environment')
-        ) || [],
-      
-      // Basic rating information
+      featureBullets: productData.feature_bullets || [],
+      description: productData.description || '',
       rating: {
-        overall: response.rating || 0,
-        totalRatings: response.ratings_total || 0
+        overall: productData.rating || 0,
+        totalRatings: productData.ratings_total || 0
       }
     };
   } catch (error) {
     console.error('Error fetching product data:', error);
     throw error;
   }
+}
+
+// Helper method to extract brand from specifications
+function extractBrand(specifications?: ProductSpecification[]): string {
+  if (!specifications) return '';
+  
+  const brandSpec = specifications.find(spec => 
+    spec.name.toLowerCase() === 'brand'
+  );
+  
+  return brandSpec?.value || '';
 }
