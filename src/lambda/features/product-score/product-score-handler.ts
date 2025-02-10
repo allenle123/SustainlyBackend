@@ -23,7 +23,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
 
     try {
       const productData = await fetchProductData(url);
-      const { score, attributes, reasoning } = await calculateSustainabilityScore(productData);
+      const { score, reasoning } = await calculateSustainabilityScore(productData);
 
       return {
         statusCode: 200,
@@ -34,7 +34,6 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
         body: JSON.stringify({ 
           productData, 
           sustainabilityScore: score,
-          sustainabilityAttributes: attributes,
           sustainabilityReasoning: reasoning
         })
       };

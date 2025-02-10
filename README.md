@@ -22,8 +22,14 @@ Sustainly is a backend service for retrieving product sustainability scores and 
 ## Deployment
 Deploy all stacks:
 ```bash
+# Option 1: Using existing script
 ./scripts/deploy.sh
+
+# Option 2: Using pnpm full-deploy script
+pnpm full-deploy
 ```
+
+The `full-deploy` script combines pre-deployment tasks (cleaning and bundling) with CDK deployment, making the process more streamlined.
 
 ## Project Structure
 - `lambda/`: AWS Lambda function code
