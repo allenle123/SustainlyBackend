@@ -8,36 +8,25 @@ export class DynamoDBStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // Create DynamoDB table
-    this.table = new dynamodb.Table(this, 'SustainlyProductsTable', {
-      tableName: 'SustainlyProductsTable',
+    this.table = new dynamodb.Table(this, 'SustainabilityProductsTable', {
+      tableName: 'SustainabilityScores',
       partitionKey: { 
         name: 'productId', 
         type: dynamodb.AttributeType.STRING 
       },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      
-      // Point-in-time recovery specification
-      pointInTimeRecovery: true,
-      
-      // Time to live attribute
-      timeToLiveAttribute: 'ttl'
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST
     });
 
-    // Optional: Add Global Secondary Index
-    this.table.addGlobalSecondaryIndex({
-      indexName: 'BrandIndex',
-      partitionKey: { 
-        name: 'brand', 
-        type: dynamodb.AttributeType.STRING 
-      }
-    });
+    // Explicitly prevent CloudFormation exports
+    this.suppressExports();
+  }
 
-    // Output the table name for reference
-    new cdk.CfnOutput(this, 'TableName', {
-      value: this.table.tableName,
-      description: 'DynamoDB Table Name'
-    });
+  // Method to suppress CloudFormation exports
+  private suppressExports(): void {
+    const cfnTable = this.table.node.defaultChild as dynamodb.CfnTable;
+    cfnTable.cfnOptions.metadata = {
+      ...cfnTable.cfnOptions.metadata,
+      'aws:cdk:path-metadata': false
+    };
   }
 }

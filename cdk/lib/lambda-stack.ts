@@ -1,3 +1,4 @@
+
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
@@ -38,11 +39,12 @@ export class LambdaStack extends cdk.Stack {
         RAINFOREST_API_KEY: process.env.RAINFOREST_API_KEY || '',
         GEMINI_API_KEY: process.env.GEMINI_API_KEY || ''
       },
-      memorySize: 256,
+      memorySize: 512,
       timeout: cdk.Duration.seconds(30)
     });
 
     // Grant the Lambda function read/write permissions to the DynamoDB table
-    props.dynamoDBTable.grantReadWriteData(this.function);
+    props.dynamoDBTable.grantReadData(this.function);
+    props.dynamoDBTable.grantWriteData(this.function);
   }
 }
