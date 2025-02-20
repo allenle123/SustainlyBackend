@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import { MOCK_RESPONSE } from './mock-data';
 
 // Use environment variable for API key
 const RAINFOREST_API_KEY = process.env.RAINFOREST_API_KEY;
@@ -30,8 +31,16 @@ export interface SustainableProductData {
   };
 }
 
+// Mock data configuration
+const USE_MOCK_DATA = true; // Set to false to use real API
+
 async function rainforestApiCall(url: string) {
   try {
+    if (USE_MOCK_DATA) {
+      console.log('Using mock product data');
+      return MOCK_RESPONSE; // Your mock response structure
+    }
+
     // Log the URL being fetched
     console.log(`Fetching product data for URL: ${url}`);
 
@@ -94,34 +103,37 @@ async function rainforestApiCall(url: string) {
 
 export async function fetchProductData(url: string): Promise<SustainableProductData> {
   try {
-    // Existing Rainforest API call logic remains the same
-    const response = await rainforestApiCall(url);
-    
-    // Extract only sustainability-relevant information
-    const productData = response;
+    // Fetch product data from Rainforest API
+    const productData = await rainforestApiCall(url);
 
+    // Extract relevant information from the product data
+    const title = productData.product.title;
+    const brand = productData.product.brand;
+    const productUrl = productData.product.link;
+    const specifications = productData.product.variants[0].dimensions || [];
+    const categories = productData.product.categories || [];
+    const featureBullets = productData.product.feature_bullets || [];
+    const description = productData.product.description;
+    const rating = {
+      overall: productData.product.rating || 0,
+      totalRatings: productData.product.ratings_total || 0
+    };
+
+    // Construct and return the sustainable product data
     return {
-      productId: productData.asin || '',
-      title: productData.title || '',
-      brand: extractBrand(productData.specifications) || '',
-      productUrl: productData.link || url,
-      specifications: productData.specifications || [],
-      categories: productData.categories
-        ?.map((cat: any) => cat.name)
-        .filter((name: string) => 
-          name && 
-          !['All Departments'].includes(name)
-        ) || [],
-      featureBullets: productData.feature_bullets || [],
-      description: productData.description || '',
-      rating: {
-        overall: productData.rating || 0,
-        totalRatings: productData.ratings_total || 0
-      }
+      productId: productData.product.asin,
+      title,
+      brand,
+      productUrl,
+      specifications,
+      categories,
+      featureBullets,
+      description,
+      rating
     };
   } catch (error) {
     console.error('Error fetching product data:', error);
-    throw error;
+    throw error; // Propagate the error to the caller
   }
 }
 
