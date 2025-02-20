@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { validateAmazonUrl } from './url-validator';
 import { fetchProductData } from './product-data-fetcher';
 import { calculateSustainabilityScore } from './sustainability-calculator';
+import { getCachedProduct, cacheProductData } from './product-cache';
 
 export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -22,8 +23,43 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
     }
 
     try {
+      // First fetch the product data to get the product ID
       const productData = await fetchProductData(url);
-      const { score, reasoning } = await calculateSustainabilityScore(productData);
+      
+      // Check if we have a cached result
+      const cachedProduct = await getCachedProduct(productData.productId);
+      
+      let score: number;
+      let reasoning: string;
+      let categoryWeights: { [key: string]: number } = {};
+      
+      if (cachedProduct) {
+        // Use cached data
+        console.log('Using cached product data for:', productData.productId);
+        score = cachedProduct.sustainabilityScore;
+        reasoning = cachedProduct.sustainabilityReasoning;
+        categoryWeights = cachedProduct.categoryWeights;
+      } else {
+        // Calculate new score
+        console.log('Calculating new sustainability score for:', productData.productId);
+        const assessment = await calculateSustainabilityScore(productData);
+        score = assessment.score;
+        reasoning = assessment.reasoning || '';
+        
+        // Extract category weights from the reasoning
+        // This is a simplified example - you might want to parse the reasoning text
+        // to extract actual category weights
+        categoryWeights = {
+          materials: 0.3,
+          manufacturing: 0.2,
+          energyEfficiency: 0.2,
+          longevity: 0.15,
+          recyclability: 0.15
+        };
+        
+        // Cache the results
+        await cacheProductData(productData.productId, productData, assessment, categoryWeights);
+      }
 
       return {
         statusCode: 200,
