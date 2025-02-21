@@ -14,7 +14,12 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 export interface SustainabilityAssessment {
   score: number;
-  reasoning?: string;
+  aspects: {
+    materials: { score: number; maxScore: number; explanation: string };
+    manufacturing: { score: number; maxScore: number; explanation: string };
+    lifecycle: { score: number; maxScore: number; explanation: string };
+    certifications: { score: number; maxScore: number; explanation: string };
+  };
 }
 
 export async function calculateSustainabilityScore(productData: SustainableProductData): Promise<SustainabilityAssessment> {
@@ -26,7 +31,13 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
     // Basic validation of product data
     if (!productData || Object.keys(productData).length === 0) {
       return {
-        score: 50
+        score: 50,
+        aspects: {
+          materials: { score: 0, maxScore: 35, explanation: '' },
+          manufacturing: { score: 0, maxScore: 25, explanation: '' },
+          lifecycle: { score: 0, maxScore: 25, explanation: '' },
+          certifications: { score: 0, maxScore: 15, explanation: '' }
+        }
       };
     }
 
@@ -55,18 +66,56 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       ${productData.description}
       
       Sustainability Assessment Criteria:
-      Provide a sustainability score from 0-100 and brief reasoning. 
-      Consider factors like:
-      - Materials used (environmental impact, recyclability)
-      - Manufacturing process
+      Evaluate the sustainability of this product by scoring and providing reasoning for each of the following aspects:
+
+      **Aspect: Materials** (35 points max)
+      Consider:
+      - Use of recycled content
+      - Renewable materials
+      - Material toxicity
+      - Biodegradability
+
+      **Aspect: Manufacturing** (25 points max)
+      Consider:
       - Energy efficiency
-      - Product longevity
-      - Potential for reuse or recycling
-      - Environmental certifications or standards
-      
-      Output format:
-      Score: [0-100 number]
-      Reasoning: [Brief explanation highlighting key sustainability factors]
+      - Water usage
+      - Carbon footprint
+      - Waste management
+
+      **Aspect: Lifecycle** (25 points max)
+      Consider:
+      - Product durability
+      - Repairability
+      - End-of-life recyclability
+      - Expected lifespan
+
+      **Aspect: Certifications** (15 points max)
+      Consider:
+      - Environmental certifications
+      - Industry standards compliance
+      - Third-party verification
+
+      Output format must follow this exact structure:
+
+      **Aspect: Materials**
+      Score: [X/35]
+      Reasoning: [Brief explanation]
+
+      ---
+      **Aspect: Manufacturing**
+      Score: [X/25]
+      Reasoning: [Brief explanation]
+
+      ---
+      **Aspect: Lifecycle**
+      Score: [X/25]
+      Reasoning: [Brief explanation]
+
+      ---
+      **Aspect: Certifications**
+      Score: [X/15]
+      Reasoning: [Brief explanation]
+      ---
     `;
 
     console.log('Gemini Prompt:', prompt);
@@ -77,7 +126,7 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
-          maxOutputTokens: 150,
+          maxOutputTokens: 1000,
         },
         safetySettings: [
           {
@@ -111,9 +160,12 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
 
       return {
         score: Math.min(baseScore + scoreBoost, 100),
-        reasoning: apiError.name === 'AbortError' 
-          ? 'Sustainability assessment timed out' 
-          : `Fallback scoring due to API error: ${apiError.message || 'Unknown error'}`
+        aspects: {
+          materials: { score: 0, maxScore: 35, explanation: '' },
+          manufacturing: { score: 0, maxScore: 25, explanation: '' },
+          lifecycle: { score: 0, maxScore: 25, explanation: '' },
+          certifications: { score: 0, maxScore: 15, explanation: '' }
+        }
       };
     } finally {
       // Ensure timeout is cleared
@@ -124,16 +176,57 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
     const responseText = result.response.text();
     console.log('Gemini Response:', responseText);
     
-    // Extract score and reasoning using regex
-    const scoreMatch = responseText.match(/Score:\s*(\d+)/);
-    const reasoningMatch = responseText.match(/Reasoning:\s*(.+)/s);
+    // Initialize category scores and reasoning
+    const categories = {
+      materials: { maxScore: 35, score: 0, explanation: '' },
+      manufacturing: { maxScore: 25, score: 0, explanation: '' },
+      lifecycle: { maxScore: 25, score: 0, explanation: '' },
+      certifications: { maxScore: 15, score: 0, explanation: '' }
+    };
 
-    const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 50;
-    const reasoning = reasoningMatch ? reasoningMatch[1].trim() : 'Unable to generate detailed reasoning';
+    // Extract scores and reasoning for each aspect
+    const aspects = responseText.split('---').filter(Boolean);
+    aspects.forEach(aspect => {
+      const aspectName = aspect.match(/\*\*Aspect: ([^*]+)\*\*/i)?.[1]?.toLowerCase().trim();
+      const scoreMatch = aspect.match(/Score:\s*(\d+)\/(\d+)/);
+      const reasoningMatch = aspect.match(/Reasoning:\s*([^\n]+)/);
+
+      if (aspectName && scoreMatch && reasoningMatch) {
+        const categoryKey = aspectName.toLowerCase().replace(/[^a-z]/g, '') as keyof typeof categories;
+        if (categories[categoryKey]) {
+          categories[categoryKey].score = parseInt(scoreMatch[1], 10);
+          categories[categoryKey].explanation = reasoningMatch[1].trim();
+        }
+      }
+    });
+
+    // Calculate total score
+    const totalScore = Object.values(categories).reduce((sum, cat) => sum + cat.score, 0);
 
     return {
-      score: Math.min(Math.max(score, 0), 100),
-      reasoning
+      score: totalScore,
+      aspects: {
+        materials: { 
+          score: categories.materials.score,
+          maxScore: categories.materials.maxScore,
+          explanation: categories.materials.explanation
+        },
+        manufacturing: {
+          score: categories.manufacturing.score,
+          maxScore: categories.manufacturing.maxScore,
+          explanation: categories.manufacturing.explanation
+        },
+        lifecycle: {
+          score: categories.lifecycle.score,
+          maxScore: categories.lifecycle.maxScore,
+          explanation: categories.lifecycle.explanation
+        },
+        certifications: {
+          score: categories.certifications.score,
+          maxScore: categories.certifications.maxScore,
+          explanation: categories.certifications.explanation
+        }
+      }
     };
   } catch (error: any) {
     // Clear the timeout to prevent memory leaks
@@ -151,9 +244,12 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
     // Fallback response
     return {
       score: 50,
-      reasoning: error.name === 'AbortError' 
-        ? 'Sustainability assessment timed out' 
-        : `Unable to generate sustainability assessment: ${error.message || 'Unexpected error'}`
+      aspects: {
+        materials: { score: 0, maxScore: 35, explanation: '' },
+        manufacturing: { score: 0, maxScore: 25, explanation: '' },
+        lifecycle: { score: 0, maxScore: 25, explanation: '' },
+        certifications: { score: 0, maxScore: 15, explanation: '' }
+      }
     };
   }
 }

@@ -30,35 +30,32 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
       const cachedProduct = await getCachedProduct(productData.productId);
       
       let score: number;
-      let reasoning: string;
-      let categoryWeights: { [key: string]: number } = {};
+      let aspects: {
+        materials: { score: number; maxScore: number; explanation: string };
+        manufacturing: { score: number; maxScore: number; explanation: string };
+        lifecycle: { score: number; maxScore: number; explanation: string };
+        certifications: { score: number; maxScore: number; explanation: string };
+      };
       
       if (cachedProduct) {
         // Use cached data
         console.log('Using cached product data for:', productData.productId);
         score = cachedProduct.sustainabilityScore;
-        reasoning = cachedProduct.sustainabilityReasoning;
-        categoryWeights = cachedProduct.categoryWeights;
+        aspects = cachedProduct.aspects;
       } else {
         // Calculate new score
         console.log('Calculating new sustainability score for:', productData.productId);
         const assessment = await calculateSustainabilityScore(productData);
         score = assessment.score;
-        reasoning = assessment.reasoning || '';
-        
-        // Extract category weights from the reasoning
-        // This is a simplified example - you might want to parse the reasoning text
-        // to extract actual category weights
-        categoryWeights = {
-          materials: 0.3,
-          manufacturing: 0.2,
-          energyEfficiency: 0.2,
-          longevity: 0.15,
-          recyclability: 0.15
-        };
+        aspects = assessment.aspects;
         
         // Cache the results
-        await cacheProductData(productData.productId, productData, assessment, categoryWeights);
+        await cacheProductData(
+          productData.productId, 
+          productData.mainImage,
+          assessment,
+          aspects
+        );
       }
 
       return {
@@ -68,9 +65,10 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
           'Access-Control-Allow-Origin': '*' 
         },
         body: JSON.stringify({ 
-          productData, 
+          productId: productData.productId,
           sustainabilityScore: score,
-          sustainabilityReasoning: reasoning
+          mainImage: productData.mainImage,
+          aspects
         })
       };
     } catch (error: unknown) {

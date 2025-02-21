@@ -1,5 +1,4 @@
 import { DynamoDB } from 'aws-sdk';
-import { SustainableProductData } from './product-data-fetcher';
 import { SustainabilityAssessment } from './sustainability-calculator';
 
 const dynamoDB = new DynamoDB.DocumentClient();
@@ -7,13 +6,30 @@ const TABLE_NAME = process.env.DYNAMODB_TABLE || '';
 
 export interface CachedProductData {
   productId: string;  // Partition key
-  productData: SustainableProductData;
   sustainabilityScore: number;
-  sustainabilityReasoning: string;
-  categoryWeights: {
-    [key: string]: number;  // Category name to weight mapping
+  mainImage: string;
+  aspects: {
+    materials: {
+      score: number;
+      maxScore: number;
+      explanation: string;
+    };
+    manufacturing: {
+      score: number;
+      maxScore: number;
+      explanation: string;
+    };
+    lifecycle: {
+      score: number;
+      maxScore: number;
+      explanation: string;
+    };
+    certifications: {
+      score: number;
+      maxScore: number;
+      explanation: string;
+    };
   };
-  lastUpdated: string;  // ISO date string
   ttl: number;  // Time-to-live in Unix timestamp
 }
 
@@ -33,20 +49,23 @@ export async function getCachedProduct(productId: string): Promise<CachedProduct
 
 export async function cacheProductData(
   productId: string,
-  productData: SustainableProductData,
+  mainImage: string,
   assessment: SustainabilityAssessment,
-  categoryWeights: { [key: string]: number }
+  aspects: {
+    materials: { score: number; maxScore: number; explanation: string };
+    manufacturing: { score: number; maxScore: number; explanation: string };
+    lifecycle: { score: number; maxScore: number; explanation: string };
+    certifications: { score: number; maxScore: number; explanation: string };
+  }
 ): Promise<void> {
   const now = new Date();
   const ttl = Math.floor(now.getTime() / 1000) + (30 * 24 * 60 * 60); // 30 days TTL
 
   const item: CachedProductData = {
     productId,
-    productData,
     sustainabilityScore: assessment.score,
-    sustainabilityReasoning: assessment.reasoning || '',
-    categoryWeights,
-    lastUpdated: now.toISOString(),
+    mainImage,
+    aspects,
     ttl
   };
 
