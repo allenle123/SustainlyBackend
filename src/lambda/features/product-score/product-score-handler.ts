@@ -51,7 +51,8 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
         
         // Cache the results
         await cacheProductData(
-          productData.productId, 
+          productData.productId,
+          productData.title,
           productData.mainImage,
           assessment,
           aspects
@@ -66,6 +67,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
         },
         body: JSON.stringify({ 
           productId: productData.productId,
+          title: productData.title,
           sustainabilityScore: score,
           mainImage: productData.mainImage,
           aspects

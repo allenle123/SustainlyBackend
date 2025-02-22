@@ -5,13 +5,13 @@
   "main": "dist/src/lambda/index.js",
   "scripts": {
     "clean": "rimraf dist",
-    "build": "npm run clean && tsc",
+    "build": "pnpm run clean && tsc",
     "start": "ts-node src/lambda/index.ts",
     "test": "jest",
     "lint": "eslint . --ext .ts",
-    "predeploy": "npm run clean && npm run bundle:lambda",
+    "predeploy": "pnpm run clean && pnpm run bundle:lambda",
     "deploy": "cdk deploy",
-    "full-deploy": "npm run predeploy && cdk deploy --all --require-approval never",
+    "full-deploy": "pnpm run predeploy && cdk deploy --all --require-approval never",
     "build:lambda": "esbuild src/lambda/index.ts --bundle --platform=node --target=node18 --outfile=dist/lambda/index.js",
     "bundle:lambda": "esbuild src/lambda/index.ts --bundle --minify --platform=node --target=node18 --outfile=dist/lambda/index.js"
   },
