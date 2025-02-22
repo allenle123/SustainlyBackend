@@ -14,7 +14,8 @@ export class DynamoDBStack extends cdk.Stack {
         name: 'productId', 
         type: dynamodb.AttributeType.STRING 
       },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: 'ttl' // Enable TTL using the ttl attribute
     });
 
     // Explicitly prevent CloudFormation exports

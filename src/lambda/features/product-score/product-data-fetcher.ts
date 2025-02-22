@@ -21,6 +21,7 @@ export interface SustainableProductData {
   title: string;
   brand: string;
   productUrl: string;
+  mainImage: string;
   specifications: ProductSpecification[];
   categories: string[];
   featureBullets: string[];
@@ -125,6 +126,7 @@ export async function fetchProductData(url: string): Promise<SustainableProductD
       title,
       brand,
       productUrl,
+      mainImage: productData.product.main_image?.link || '',
       specifications,
       categories,
       featureBullets,
