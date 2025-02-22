@@ -139,6 +139,67 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
           }
         ] as SafetySetting[]
       });
+
+      // Clear timeout since we got a response
+      clearTimeout(timeoutId);
+
+      // Parse the response
+      const responseText = result.response.text();
+      console.log('Gemini Response:', responseText);
+      
+      // Initialize category scores and reasoning
+      const categories = {
+        materials: { maxScore: 35, score: 0, explanation: '' },
+        manufacturing: { maxScore: 25, score: 0, explanation: '' },
+        lifecycle: { maxScore: 25, score: 0, explanation: '' },
+        certifications: { maxScore: 15, score: 0, explanation: '' }
+      };
+
+      // Extract scores and reasoning for each aspect
+      const aspects = responseText.split('---').filter(Boolean);
+      aspects.forEach(aspect => {
+        const aspectName = aspect.match(/\*\*Aspect: ([^*]+)\*\*/i)?.[1]?.toLowerCase().trim();
+        const scoreMatch = aspect.match(/Score:\s*\[?(\d+)\/(\d+)\]?/);
+        const reasoningMatch = aspect.match(/Reasoning:\s*([^\n]+)/);
+
+        if (aspectName && scoreMatch && reasoningMatch) {
+          const categoryKey = aspectName.toLowerCase().replace(/[^a-z]/g, '') as keyof typeof categories;
+          if (categories[categoryKey]) {
+            categories[categoryKey].score = parseInt(scoreMatch[1], 10);
+            categories[categoryKey].explanation = reasoningMatch[1].trim();
+          }
+        }
+      });
+
+      // Calculate total score
+      const totalScore = Object.values(categories).reduce((sum, cat) => sum + cat.score, 0);
+
+      return {
+        score: totalScore,
+        aspects: {
+          materials: { 
+            score: categories.materials.score,
+            maxScore: categories.materials.maxScore,
+            explanation: categories.materials.explanation
+          },
+          manufacturing: {
+            score: categories.manufacturing.score,
+            maxScore: categories.manufacturing.maxScore,
+            explanation: categories.manufacturing.explanation
+          },
+          lifecycle: {
+            score: categories.lifecycle.score,
+            maxScore: categories.lifecycle.maxScore,
+            explanation: categories.lifecycle.explanation
+          },
+          certifications: {
+            score: categories.certifications.score,
+            maxScore: categories.certifications.maxScore,
+            explanation: categories.certifications.explanation
+          }
+        }
+      };
+
     } catch (apiError: any) {
       // Clear the timeout to prevent memory leaks
       clearTimeout(timeoutId);
@@ -172,62 +233,6 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       clearTimeout(timeoutId);
     }
 
-    // Parse the response
-    const responseText = result.response.text();
-    console.log('Gemini Response:', responseText);
-    
-    // Initialize category scores and reasoning
-    const categories = {
-      materials: { maxScore: 35, score: 0, explanation: '' },
-      manufacturing: { maxScore: 25, score: 0, explanation: '' },
-      lifecycle: { maxScore: 25, score: 0, explanation: '' },
-      certifications: { maxScore: 15, score: 0, explanation: '' }
-    };
-
-    // Extract scores and reasoning for each aspect
-    const aspects = responseText.split('---').filter(Boolean);
-    aspects.forEach(aspect => {
-      const aspectName = aspect.match(/\*\*Aspect: ([^*]+)\*\*/i)?.[1]?.toLowerCase().trim();
-      const scoreMatch = aspect.match(/Score:\s*(\d+)\/(\d+)/);
-      const reasoningMatch = aspect.match(/Reasoning:\s*([^\n]+)/);
-
-      if (aspectName && scoreMatch && reasoningMatch) {
-        const categoryKey = aspectName.toLowerCase().replace(/[^a-z]/g, '') as keyof typeof categories;
-        if (categories[categoryKey]) {
-          categories[categoryKey].score = parseInt(scoreMatch[1], 10);
-          categories[categoryKey].explanation = reasoningMatch[1].trim();
-        }
-      }
-    });
-
-    // Calculate total score
-    const totalScore = Object.values(categories).reduce((sum, cat) => sum + cat.score, 0);
-
-    return {
-      score: totalScore,
-      aspects: {
-        materials: { 
-          score: categories.materials.score,
-          maxScore: categories.materials.maxScore,
-          explanation: categories.materials.explanation
-        },
-        manufacturing: {
-          score: categories.manufacturing.score,
-          maxScore: categories.manufacturing.maxScore,
-          explanation: categories.manufacturing.explanation
-        },
-        lifecycle: {
-          score: categories.lifecycle.score,
-          maxScore: categories.lifecycle.maxScore,
-          explanation: categories.lifecycle.explanation
-        },
-        certifications: {
-          score: categories.certifications.score,
-          maxScore: categories.certifications.maxScore,
-          explanation: categories.certifications.explanation
-        }
-      }
-    };
   } catch (error: any) {
     // Clear the timeout to prevent memory leaks
     clearTimeout(timeoutId);

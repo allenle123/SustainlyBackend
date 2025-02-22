@@ -104,38 +104,44 @@ async function rainforestApiCall(url: string) {
 
 export async function fetchProductData(url: string): Promise<SustainableProductData> {
   try {
-    // Fetch product data from Rainforest API
-    const productData = await rainforestApiCall(url);
+    const response = await rainforestApiCall(url);
+    const product = response.product;
 
-    // Extract relevant information from the product data
-    const title = productData.product.title;
-    const brand = productData.product.brand;
-    const productUrl = productData.product.link;
-    const specifications = productData.product.variants[0].dimensions || [];
-    const categories = productData.product.categories || [];
-    const featureBullets = productData.product.feature_bullets || [];
-    const description = productData.product.description;
-    const rating = {
-      overall: productData.product.rating || 0,
-      totalRatings: productData.product.ratings_total || 0
-    };
+    if (!product) {
+      throw new Error('No product data found in response');
+    }
 
-    // Construct and return the sustainable product data
-    return {
-      productId: productData.product.asin,
-      title,
-      brand,
-      productUrl,
-      mainImage: productData.product.main_image?.link || '',
+    // Extract specifications from the product data
+    const specifications: ProductSpecification[] = 
+      product.specifications?.map((spec: any) => ({
+        name: spec.name,
+        value: spec.value
+      })) || [];
+
+    // Extract categories from the product data
+    const categories = product.categories?.map((cat: any) => cat.name) || [];
+
+    // Create the standardized product data structure
+    const productData: SustainableProductData = {
+      productId: product.asin || '',
+      title: product.title || '',
+      brand: product.brand || '',
+      productUrl: product.link || url,
+      mainImage: product.images?.[0]?.link || '',
       specifications,
       categories,
-      featureBullets,
-      description,
-      rating
+      featureBullets: product.feature_bullets || [],
+      description: product.feature_bullets_flat || '',
+      rating: {
+        overall: product.rating || 0,
+        totalRatings: product.ratings_total || 0
+      }
     };
+
+    return productData;
   } catch (error) {
     console.error('Error fetching product data:', error);
-    throw error; // Propagate the error to the caller
+    throw error;
   }
 }
 
