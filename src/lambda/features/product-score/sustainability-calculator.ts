@@ -65,56 +65,130 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       Product Description:
       ${productData.description}
       
-      Sustainability Assessment Criteria:
-      Evaluate the sustainability of this product by scoring and providing reasoning for each of the following aspects:
+      Sustainability Assessment Guidelines:
+      Use the scoring ranges below as your primary guide. When information isn't explicitly stated, make reasonable assumptions based on:
+      - Product category and typical industry practices
+      - Brand reputation and general sustainability stance
+      - Indirect indicators in product descriptions and features
+      - Customer reviews and usage experiences
+      - Similar products in the market
 
       **Aspect: Materials** (35 points max)
-      Consider:
-      - Use of recycled content
-      - Renewable materials
-      - Material toxicity
-      - Biodegradability
+      Scoring Ranges:
+      - 0-8 points: Toxic/harmful/non-renewable materials
+        * Evidence of harmful chemicals
+        * Non-renewable resource usage
+        * No eco-friendly considerations
+      
+      - 9-17 points: Basic eco-materials
+        * Some recycled content
+        * Basic natural materials
+        * Limited harmful substances
+      
+      - 18-26 points: Mostly sustainable
+        * Significant recycled content
+        * Majority eco-friendly materials
+        * Low environmental impact
+      
+      - 27-35 points: Fully sustainable
+        * Fully sustainable and renewable
+        * Non-toxic materials
+        * Biodegradable components
+        * Innovative eco-materials
 
       **Aspect: Manufacturing** (25 points max)
-      Consider:
-      - Energy efficiency
-      - Water usage
-      - Carbon footprint
-      - Waste management
+      Scoring Ranges:
+      - 0-6 points: High energy/water waste
+        * Intensive resource usage
+        * Poor waste management
+        * High environmental impact
+      
+      - 7-12 points: Industry standard
+        * Standard efficiency measures
+        * Basic waste reduction
+        * Typical industry practices
+      
+      - 13-19 points: Efficient, low impact
+        * Energy-efficient processes
+        * Water conservation
+        * Waste reduction programs
+      
+      - 20-25 points: Renewable energy, zero waste
+        * Renewable energy usage
+        * Zero-waste practices
+        * Innovative production methods
 
       **Aspect: Lifecycle** (25 points max)
-      Consider:
-      - Product durability
-      - Repairability
-      - End-of-life recyclability
-      - Expected lifespan
+      Scoring Ranges:
+      - 0-6 points: <1yr life, non-repairable
+        * Short lifespan
+        * Disposable design
+        * No repair options
+      
+      - 7-12 points: 2-5yr life, limited repair
+        * Average lifespan
+        * Basic repairability
+        * Some replaceable parts
+      
+      - 13-19 points: 5-10yr life, repairable
+        * Extended lifespan
+        * Good repairability
+        * Modular components
+      
+      - 20-25 points: 10yr+ life, fully repairable
+        * Exceptional durability
+        * Full repairability
+        * Upgradeable design
 
       **Aspect: Certifications** (15 points max)
-      Consider:
-      - Environmental certifications
-      - Industry standards compliance
-      - Third-party verification
+      Scoring Ranges:
+      - 0-3 points: No certifications
+        * No eco-certifications
+        * No verified claims
+        * No standards compliance
+      
+      - 4-7 points: Basic certifications
+        * Basic industry certifications
+        * Some verified claims
+        * Standard compliance
+      
+      - 8-11 points: Multiple eco-certs
+        * Multiple certifications
+        * Strong verification
+        * Above standard compliance
+      
+      - 12-15 points: Highest level certs
+        * Premium certifications
+        * Full verification
+        * Industry-leading standards
+
+      Remember to:
+      - Use the scoring ranges as your primary guide
+      - Make reasonable assumptions when information is not explicit
+      - Consider indirect indicators of sustainability
+      - Use industry knowledge to fill information gaps
+      - Balance strictness with fairness in scoring
 
       Output format must follow this exact structure:
 
       **Aspect: Materials**
       Score: [X/35]
-      Reasoning: [Brief explanation]
+      Reasoning: [Explain which scoring range was selected and why, including both explicit evidence and reasonable inferences]
 
       ---
       **Aspect: Manufacturing**
       Score: [X/25]
-      Reasoning: [Brief explanation]
+      Reasoning: [Explain which scoring range was selected and why, including both explicit evidence and reasonable inferences]
 
       ---
       **Aspect: Lifecycle**
       Score: [X/25]
-      Reasoning: [Brief explanation]
+      Reasoning: [Explain which scoring range was selected and why, including both explicit evidence and reasonable inferences]
 
       ---
       **Aspect: Certifications**
       Score: [X/15]
-      Reasoning: [Brief explanation]
+      Reasoning: [Explain which scoring range was selected and why, including both explicit evidence and reasonable inferences]
       ---
     `;
 
