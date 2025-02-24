@@ -9,6 +9,15 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { getProductScore } from './features/product-score/product-score-handler';
 import { getAlternativeProducts } from './features/product-score/get-alternative-products';
 
+// Define CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': 'http://localhost:3000',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Credentials': 'true',
+  'Content-Type': 'application/json'
+};
+
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Log full event for debugging
@@ -19,6 +28,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       console.error('Received undefined event');
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ message: 'Invalid request: No event data' }),
       };
     }
@@ -30,6 +40,15 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     console.log('Processed path:', path);
     console.log('Processed method:', method);
 
+    // Handle OPTIONS requests for CORS preflight
+    if (method === 'OPTIONS') {
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: ''
+      };
+    }
+
     switch (true) {
       case path.includes('/product-score') && method === 'GET':
         return await getProductScore(event);
@@ -39,6 +58,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         console.warn('Unhandled route:', { path, method });
         return {
           statusCode: 404,
+          headers: corsHeaders,
           body: JSON.stringify({ 
             message: 'Not Found',
             details: { path, method }
@@ -49,14 +69,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     console.error('Error processing request:', {
       errorMessage: error instanceof Error ? error.message : 'Unknown error',
       errorStack: error instanceof Error ? error.stack : 'No stack trace',
-      errorType: typeof error
+      errorDetails: error
     });
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
+      headers: corsHeaders,
+      body: JSON.stringify({
         message: 'Internal Server Error',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }),
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
     };
   }
 };

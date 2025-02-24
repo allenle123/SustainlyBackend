@@ -4,6 +4,13 @@ import { fetchProductData } from './product-data-fetcher';
 import { calculateSustainabilityScore } from './sustainability-calculator';
 import { getCachedProduct, cacheProductData } from './product-cache';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': 'http://localhost:3000',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Credentials': 'true',
+};
+
 export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     const url = event.queryStringParameters?.url;
@@ -11,6 +18,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
     if (!url || typeof url !== 'string' || !validateAmazonUrl(url)) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ 
           message: 'Invalid Amazon product URL',
           details: {
@@ -61,10 +69,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
 
       return {
         statusCode: 200,
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Access-Control-Allow-Origin': '*' 
-        },
+        headers: corsHeaders,
         body: JSON.stringify({ 
           productId: productData.productId,
           title: productData.title,
@@ -78,10 +83,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
       
       return {
         statusCode: 500,
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Access-Control-Allow-Origin': '*' 
-        },
+        headers: corsHeaders,
         body: JSON.stringify({ 
           message: 'Error processing product data', 
           error: errorMessage,
@@ -101,10 +103,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
     
     return {
       statusCode: 500,
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Access-Control-Allow-Origin': '*' 
-      },
+      headers: corsHeaders,
       body: JSON.stringify({ 
         message: 'Critical error processing request', 
         error: errorMessage,
