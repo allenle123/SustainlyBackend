@@ -31,7 +31,6 @@ export interface CachedProductData {
       explanation: string;
     };
   };
-  ttl: number;  // Time-to-live in Unix timestamp
 }
 
 export async function getCachedProduct(productId: string): Promise<CachedProductData | null> {
@@ -60,16 +59,12 @@ export async function cacheProductData(
     certifications: { score: number; maxScore: number; explanation: string };
   }
 ): Promise<void> {
-  const now = new Date();
-  const ttl = Math.floor(now.getTime() / 1000) + (24 * 60 * 60); // 24 hours from now
-
   const item: CachedProductData = {
     productId,
     title,
     sustainabilityScore: assessment.score,
     mainImage,
-    aspects,
-    ttl
+    aspects
   };
 
   try {
