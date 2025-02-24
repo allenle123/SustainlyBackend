@@ -15,7 +15,13 @@ export class ApiStack extends cdk.Stack {
 
     const api = new apigateway.RestApi(this, 'SustainlyApi', {
       restApiName: 'Sustainly API',
-      description: 'API for Sustainly product sustainability services'
+      description: 'API for Sustainly product sustainability services',
+      defaultCorsPreflightOptions: {
+        allowOrigins: ['http://localhost:3000'],
+        allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowHeaders: ['Content-Type', 'Authorization'],
+        allowCredentials: true
+      }
     });
 
     const lambdaIntegration = new apigateway.LambdaIntegration(lambdaFunction);
