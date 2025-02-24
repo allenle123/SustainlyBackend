@@ -70,7 +70,6 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       - Product category and typical industry practices
       - Brand reputation and general sustainability stance
       - Indirect indicators in product descriptions and features
-      - Customer reviews and usage experiences
       - Similar products in the market
 
       **Aspect: Materials** (35 points max)
