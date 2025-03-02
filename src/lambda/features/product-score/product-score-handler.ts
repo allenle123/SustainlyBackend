@@ -5,7 +5,7 @@ import { calculateSustainabilityScore } from './sustainability-calculator';
 import { getCachedProduct, cacheProductData } from './product-cache';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'http://localhost:3000',
+  'Access-Control-Allow-Origin': 'http://localhost:8080',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Credentials': 'true',
@@ -63,7 +63,8 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
           productData.title,
           productData.mainImage,
           assessment,
-          aspects
+          aspects,
+          productData.brand
         );
       }
 
@@ -73,6 +74,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
         body: JSON.stringify({ 
           productId: productData.productId,
           title: productData.title,
+          brand: productData.brand,
           sustainabilityScore: score,
           mainImage: productData.mainImage,
           aspects
