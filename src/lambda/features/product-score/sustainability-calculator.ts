@@ -52,24 +52,14 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       
       Categories: ${productData.categories.join(', ')}
       
-      Ratings:
-      - Overall Rating: ${productData.rating.overall}/5
-      - Total Reviews: ${productData.rating.totalRatings}
-      
-      Product Specifications:
-      ${productData.specifications.map(spec => `- ${spec.name}: ${spec.value}`).join('\n')}
-      
       Feature Highlights:
       ${productData.featureBullets.map((bullet, index) => `${index + 1}. ${bullet}`).join('\n')}
-      
-      Product Description:
-      ${productData.description}
       
       Sustainability Assessment Guidelines:
       Use the scoring ranges below as your primary guide. When information isn't explicitly stated, make reasonable assumptions based on:
       - Product category and typical industry practices
       - Brand reputation and general sustainability stance
-      - Indirect indicators in product descriptions and features
+      - Indirect indicators in product features
       - Similar products in the market
 
       **Aspect: Materials** (35 points max)
@@ -289,11 +279,9 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
 
       // Fallback scoring
       const baseScore = 50;
-      const scoreBoost = 
-        (productData.rating.overall >= 4.5 ? 10 : 0);
 
       return {
-        score: Math.min(baseScore + scoreBoost, 100),
+        score: baseScore,
         aspects: {
           materials: { score: 0, maxScore: 35, explanation: '' },
           manufacturing: { score: 0, maxScore: 25, explanation: '' },

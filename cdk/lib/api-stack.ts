@@ -17,7 +17,7 @@ export class ApiStack extends cdk.Stack {
       restApiName: 'Sustainly API',
       description: 'API for Sustainly product sustainability services',
       defaultCorsPreflightOptions: {
-        allowOrigins: ['http://localhost:3000'],
+        allowOrigins: ['http://localhost:8080'],
         allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowHeaders: ['Content-Type', 'Authorization'],
         allowCredentials: true

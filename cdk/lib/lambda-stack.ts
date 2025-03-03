@@ -1,4 +1,3 @@
-
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
@@ -22,7 +21,7 @@ export class LambdaStack extends cdk.Stack {
     super(scope, id, props);
 
     // Validate environment variables
-    const requiredEnvVars = ['RAINFOREST_API_KEY', 'GEMINI_API_KEY'];
+    const requiredEnvVars = ['CANOPY_API_KEY', 'GEMINI_API_KEY'];
     requiredEnvVars.forEach(varName => {
       if (!process.env[varName]) {
         throw new Error(`Missing required environment variable: ${varName}`);
@@ -36,7 +35,7 @@ export class LambdaStack extends cdk.Stack {
       code: lambda.Code.fromAsset('dist/lambda'),
       environment: {
         DYNAMODB_TABLE: props.dynamoDBTable.tableName,
-        RAINFOREST_API_KEY: process.env.RAINFOREST_API_KEY || '',
+        CANOPY_API_KEY: process.env.CANOPY_API_KEY || '',
         GEMINI_API_KEY: process.env.GEMINI_API_KEY || ''
       },
       memorySize: 512,

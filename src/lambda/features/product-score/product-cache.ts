@@ -7,6 +7,7 @@ const TABLE_NAME = process.env.DYNAMODB_TABLE || '';
 export interface CachedProductData {
   productId: string;  // Partition key
   title: string;      // Product title
+  brand: string;      // Product brand
   sustainabilityScore: number;
   mainImage: string;
   aspects: {
@@ -57,11 +58,13 @@ export async function cacheProductData(
     manufacturing: { score: number; maxScore: number; explanation: string };
     lifecycle: { score: number; maxScore: number; explanation: string };
     certifications: { score: number; maxScore: number; explanation: string };
-  }
+  },
+  brand: string
 ): Promise<void> {
   const item: CachedProductData = {
     productId,
     title,
+    brand,
     sustainabilityScore: assessment.score,
     mainImage,
     aspects
