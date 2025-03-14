@@ -15,10 +15,10 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 export interface SustainabilityAssessment {
   score: number;
   aspects: {
-    materials: { score: number; maxScore: number; explanation: string };
-    manufacturing: { score: number; maxScore: number; explanation: string };
-    lifecycle: { score: number; maxScore: number; explanation: string };
-    certifications: { score: number; maxScore: number; explanation: string };
+    materials: { score: number; maxScore: number; explanation: string; shortExplanation: string };
+    manufacturing: { score: number; maxScore: number; explanation: string; shortExplanation: string };
+    lifecycle: { score: number; maxScore: number; explanation: string; shortExplanation: string };
+    certifications: { score: number; maxScore: number; explanation: string; shortExplanation: string };
   };
 }
 
@@ -33,10 +33,10 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       return {
         score: 50,
         aspects: {
-          materials: { score: 0, maxScore: 35, explanation: '' },
-          manufacturing: { score: 0, maxScore: 25, explanation: '' },
-          lifecycle: { score: 0, maxScore: 25, explanation: '' },
-          certifications: { score: 0, maxScore: 15, explanation: '' }
+          materials: { score: 0, maxScore: 35, explanation: '', shortExplanation: '' },
+          manufacturing: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
+          lifecycle: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
+          certifications: { score: 0, maxScore: 15, explanation: '', shortExplanation: '' }
         }
       };
     }
@@ -61,95 +61,96 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       - Brand reputation and general sustainability stance
       - Indirect indicators in product features
       - Similar products in the market
+      - Concrete data and statistics when available
 
       **Aspect: Materials** (35 points max)
       Scoring Ranges:
       - 0-8 points: Toxic/harmful/non-renewable materials
-        * Evidence of harmful chemicals
-        * Non-renewable resource usage
+        * Evidence of harmful chemicals (e.g., PVC, BPA, phthalates)
+        * Non-renewable resource usage (e.g., virgin petroleum-based plastics)
         * No eco-friendly considerations
       
       - 9-17 points: Basic eco-materials
-        * Some recycled content
-        * Basic natural materials
-        * Limited harmful substances
+        * Some recycled content (10-30%)
+        * Basic natural materials (cotton, wood without certifications)
+        * Limited harmful substances (meets minimum regulatory requirements)
       
       - 18-26 points: Mostly sustainable
-        * Significant recycled content
-        * Majority eco-friendly materials
-        * Low environmental impact
+        * Significant recycled content (31-70%)
+        * Majority eco-friendly materials (certified organic, FSC wood)
+        * Low environmental impact (water-based finishes, natural dyes)
       
       - 27-35 points: Fully sustainable
-        * Fully sustainable and renewable
-        * Non-toxic materials
-        * Biodegradable components
-        * Innovative eco-materials
+        * Fully sustainable and renewable (71-100% recycled or renewable)
+        * Non-toxic materials (zero VOCs, formaldehyde-free)
+        * Biodegradable components (compostable materials)
+        * Innovative eco-materials (mycelium, algae-based, reclaimed)
 
       **Aspect: Manufacturing** (25 points max)
       Scoring Ranges:
       - 0-6 points: High energy/water waste
-        * Intensive resource usage
-        * Poor waste management
-        * High environmental impact
+        * Intensive resource usage (high carbon footprint >10kg CO2e per unit)
+        * Poor waste management (no recycling programs)
+        * High environmental impact (toxic discharge, excessive water usage >100L per unit)
       
       - 7-12 points: Industry standard
-        * Standard efficiency measures
-        * Basic waste reduction
-        * Typical industry practices
+        * Standard efficiency measures (meets industry average carbon footprint)
+        * Basic waste reduction (some recycling, <50% waste diverted from landfill)
+        * Typical industry practices (some energy efficiency measures)
       
       - 13-19 points: Efficient, low impact
-        * Energy-efficient processes
-        * Water conservation
-        * Waste reduction programs
+        * Energy-efficient processes (30-70% reduction in energy use vs. industry standard)
+        * Water conservation (30-70% reduction in water use)
+        * Waste reduction programs (50-90% waste diverted from landfill)
       
       - 20-25 points: Renewable energy, zero waste
-        * Renewable energy usage
-        * Zero-waste practices
-        * Innovative production methods
+        * Renewable energy usage (>70% renewable energy in production)
+        * Zero-waste practices (>90% waste diverted from landfill)
+        * Innovative production methods (closed-loop systems, carbon-negative processes)
 
       **Aspect: Lifecycle** (25 points max)
       Scoring Ranges:
       - 0-6 points: <1yr life, non-repairable
-        * Short lifespan
-        * Disposable design
-        * No repair options
+        * Short lifespan (<1 year typical use)
+        * Disposable design (single-use or limited uses)
+        * No repair options (sealed units, proprietary parts)
       
       - 7-12 points: 2-5yr life, limited repair
-        * Average lifespan
-        * Basic repairability
-        * Some replaceable parts
+        * Average lifespan (2-5 years typical use)
+        * Basic repairability (some parts replaceable)
+        * Some replaceable parts (batteries, filters)
       
       - 13-19 points: 5-10yr life, repairable
-        * Extended lifespan
-        * Good repairability
-        * Modular components
+        * Extended lifespan (5-10 years typical use)
+        * Good repairability (most parts replaceable)
+        * Modular components (easy disassembly, standard parts)
       
       - 20-25 points: 10yr+ life, fully repairable
-        * Exceptional durability
-        * Full repairability
-        * Upgradeable design
+        * Exceptional durability (10+ years typical use)
+        * Full repairability (all parts replaceable, repair manual available)
+        * Upgradeable design (modular, future-proof)
 
       **Aspect: Certifications** (15 points max)
       Scoring Ranges:
       - 0-3 points: No certifications
-        * No eco-certifications
-        * No verified claims
-        * No standards compliance
+        * No eco-certifications (no third-party verification)
+        * No verified claims (self-declared "green" claims only)
+        * No standards compliance (below minimum industry standards)
       
       - 4-7 points: Basic certifications
-        * Basic industry certifications
-        * Some verified claims
-        * Standard compliance
+        * Basic industry certifications (single certification like Energy Star)
+        * Some verified claims (partial third-party verification)
+        * Standard compliance (meets minimum industry standards)
       
       - 8-11 points: Multiple eco-certs
-        * Multiple certifications
-        * Strong verification
-        * Above standard compliance
+        * Multiple certifications (2-3 recognized certifications)
+        * Strong verification (comprehensive third-party verification)
+        * Above standard compliance (exceeds industry standards)
       
       - 12-15 points: Highest level certs
-        * Premium certifications
-        * Full verification
-        * Industry-leading standards
+        * Premium certifications (B Corp, Cradle to Cradle Gold/Platinum)
+        * Full verification (comprehensive documentation and transparency)
+        * Industry-leading standards (sets new benchmarks in the industry)
 
       Remember to:
       - Use the scoring ranges as your primary guide
@@ -157,27 +158,33 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       - Consider indirect indicators of sustainability
       - Use industry knowledge to fill information gaps
       - Balance strictness with fairness in scoring
+      - Provide concrete data points whenever possible
+      - Explain exactly how you calculated the score for each aspect
 
       Output format must follow this exact structure:
 
       **Aspect: Materials**
       Score: [X/35]
-      Reasoning: [Explain which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Reasoning: [Detailed explanation of which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
 
       ---
       **Aspect: Manufacturing**
       Score: [X/25]
-      Reasoning: [Explain which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Reasoning: [Detailed explanation of which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
 
       ---
       **Aspect: Lifecycle**
       Score: [X/25]
-      Reasoning: [Explain which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Reasoning: [Detailed explanation of which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
 
       ---
       **Aspect: Certifications**
       Score: [X/15]
-      Reasoning: [Explain which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Reasoning: [Detailed explanation of which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
       ---
     `;
 
@@ -212,10 +219,10 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       
       // Initialize category scores and reasoning
       const categories = {
-        materials: { maxScore: 35, score: 0, explanation: '' },
-        manufacturing: { maxScore: 25, score: 0, explanation: '' },
-        lifecycle: { maxScore: 25, score: 0, explanation: '' },
-        certifications: { maxScore: 15, score: 0, explanation: '' }
+        materials: { maxScore: 35, score: 0, explanation: '', shortExplanation: '' },
+        manufacturing: { maxScore: 25, score: 0, explanation: '', shortExplanation: '' },
+        lifecycle: { maxScore: 25, score: 0, explanation: '', shortExplanation: '' },
+        certifications: { maxScore: 15, score: 0, explanation: '', shortExplanation: '' }
       };
 
       // Extract scores and reasoning for each aspect
@@ -224,12 +231,14 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
         const aspectName = aspect.match(/\*\*Aspect: ([^*]+)\*\*/i)?.[1]?.toLowerCase().trim();
         const scoreMatch = aspect.match(/Score:\s*\[?(\d+)\/(\d+)\]?/);
         const reasoningMatch = aspect.match(/Reasoning:\s*([^\n]+)/);
+        const shortReasoningMatch = aspect.match(/Short Reasoning:\s*([^\n]+)/);
 
         if (aspectName && scoreMatch && reasoningMatch) {
           const categoryKey = aspectName.toLowerCase().replace(/[^a-z]/g, '') as keyof typeof categories;
           if (categories[categoryKey]) {
             categories[categoryKey].score = parseInt(scoreMatch[1], 10);
             categories[categoryKey].explanation = reasoningMatch[1].trim();
+            categories[categoryKey].shortExplanation = shortReasoningMatch ? shortReasoningMatch[1].trim() : reasoningMatch[1].trim().substring(0, 100) + '...';
           }
         }
       });
@@ -243,22 +252,26 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
           materials: { 
             score: categories.materials.score,
             maxScore: categories.materials.maxScore,
-            explanation: categories.materials.explanation
+            explanation: categories.materials.explanation,
+            shortExplanation: categories.materials.shortExplanation
           },
           manufacturing: {
             score: categories.manufacturing.score,
             maxScore: categories.manufacturing.maxScore,
-            explanation: categories.manufacturing.explanation
+            explanation: categories.manufacturing.explanation,
+            shortExplanation: categories.manufacturing.shortExplanation
           },
           lifecycle: {
             score: categories.lifecycle.score,
             maxScore: categories.lifecycle.maxScore,
-            explanation: categories.lifecycle.explanation
+            explanation: categories.lifecycle.explanation,
+            shortExplanation: categories.lifecycle.shortExplanation
           },
           certifications: {
             score: categories.certifications.score,
             maxScore: categories.certifications.maxScore,
-            explanation: categories.certifications.explanation
+            explanation: categories.certifications.explanation,
+            shortExplanation: categories.certifications.shortExplanation
           }
         }
       };
@@ -283,10 +296,10 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       return {
         score: baseScore,
         aspects: {
-          materials: { score: 0, maxScore: 35, explanation: '' },
-          manufacturing: { score: 0, maxScore: 25, explanation: '' },
-          lifecycle: { score: 0, maxScore: 25, explanation: '' },
-          certifications: { score: 0, maxScore: 15, explanation: '' }
+          materials: { score: 0, maxScore: 35, explanation: '', shortExplanation: '' },
+          manufacturing: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
+          lifecycle: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
+          certifications: { score: 0, maxScore: 15, explanation: '', shortExplanation: '' }
         }
       };
     } finally {
@@ -311,10 +324,10 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
     return {
       score: 50,
       aspects: {
-        materials: { score: 0, maxScore: 35, explanation: '' },
-        manufacturing: { score: 0, maxScore: 25, explanation: '' },
-        lifecycle: { score: 0, maxScore: 25, explanation: '' },
-        certifications: { score: 0, maxScore: 15, explanation: '' }
+        materials: { score: 0, maxScore: 35, explanation: '', shortExplanation: '' },
+        manufacturing: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
+        lifecycle: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
+        certifications: { score: 0, maxScore: 15, explanation: '', shortExplanation: '' }
       }
     };
   }

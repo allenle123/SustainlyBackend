@@ -21,7 +21,7 @@ export class LambdaStack extends cdk.Stack {
     super(scope, id, props);
 
     // Validate environment variables
-    const requiredEnvVars = ['CANOPY_API_KEY', 'GEMINI_API_KEY'];
+    const requiredEnvVars = ['CANOPY_API_KEY', 'GEMINI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
     requiredEnvVars.forEach(varName => {
       if (!process.env[varName]) {
         throw new Error(`Missing required environment variable: ${varName}`);
@@ -36,7 +36,9 @@ export class LambdaStack extends cdk.Stack {
       environment: {
         DYNAMODB_TABLE: props.dynamoDBTable.tableName,
         CANOPY_API_KEY: process.env.CANOPY_API_KEY || '',
-        GEMINI_API_KEY: process.env.GEMINI_API_KEY || ''
+        GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+        SUPABASE_URL: process.env.SUPABASE_URL || '',
+        SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || ''
       },
       memorySize: 512,
       timeout: cdk.Duration.seconds(30)
