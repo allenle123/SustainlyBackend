@@ -15,21 +15,25 @@ export interface CachedProductData {
       score: number;
       maxScore: number;
       explanation: string;
+      shortExplanation: string;
     };
     manufacturing: {
       score: number;
       maxScore: number;
       explanation: string;
+      shortExplanation: string;
     };
     lifecycle: {
       score: number;
       maxScore: number;
       explanation: string;
+      shortExplanation: string;
     };
     certifications: {
       score: number;
       maxScore: number;
       explanation: string;
+      shortExplanation: string;
     };
   };
 }
@@ -53,12 +57,6 @@ export async function cacheProductData(
   title: string,
   mainImage: string,
   assessment: SustainabilityAssessment,
-  aspects: {
-    materials: { score: number; maxScore: number; explanation: string };
-    manufacturing: { score: number; maxScore: number; explanation: string };
-    lifecycle: { score: number; maxScore: number; explanation: string };
-    certifications: { score: number; maxScore: number; explanation: string };
-  },
   brand: string
 ): Promise<void> {
   const item: CachedProductData = {
@@ -67,7 +65,32 @@ export async function cacheProductData(
     brand,
     sustainabilityScore: assessment.score,
     mainImage,
-    aspects
+    aspects: {
+      materials: {
+        score: assessment.aspects.materials.score,
+        maxScore: assessment.aspects.materials.maxScore,
+        explanation: assessment.aspects.materials.explanation,
+        shortExplanation: assessment.aspects.materials.shortExplanation
+      },
+      manufacturing: {
+        score: assessment.aspects.manufacturing.score,
+        maxScore: assessment.aspects.manufacturing.maxScore,
+        explanation: assessment.aspects.manufacturing.explanation,
+        shortExplanation: assessment.aspects.manufacturing.shortExplanation
+      },
+      lifecycle: {
+        score: assessment.aspects.lifecycle.score,
+        maxScore: assessment.aspects.lifecycle.maxScore,
+        explanation: assessment.aspects.lifecycle.explanation,
+        shortExplanation: assessment.aspects.lifecycle.shortExplanation
+      },
+      certifications: {
+        score: assessment.aspects.certifications.score,
+        maxScore: assessment.aspects.certifications.maxScore,
+        explanation: assessment.aspects.certifications.explanation,
+        shortExplanation: assessment.aspects.certifications.shortExplanation
+      }
+    }
   };
 
   try {

@@ -3,6 +3,7 @@ import { validateAmazonUrl } from './url-validator';
 import { fetchProductData } from './product-data-fetcher';
 import { calculateSustainabilityScore } from './sustainability-calculator';
 import { getCachedProduct, cacheProductData } from './product-cache';
+import { getUserIdFromToken, saveToUserHistory } from '../../utils/supabase-client';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'http://localhost:8080',
@@ -14,6 +15,9 @@ const corsHeaders = {
 export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     const url = event.queryStringParameters?.url;
+    
+    // Log headers to debug authentication issues
+    console.log('Request headers:', JSON.stringify(event.headers));
 
     if (!url || typeof url !== 'string' || !validateAmazonUrl(url)) {
       return {
@@ -31,6 +35,13 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
     }
 
     try {
+      // Extract user ID from authorization header if present
+      const authHeader = event.headers?.Authorization || event.headers?.authorization;
+      console.log('Auth header:', authHeader);
+      
+      const userId = await getUserIdFromToken(authHeader);
+      console.log('Extracted user ID:', userId);
+      
       // First fetch the product data to get the product ID
       const productData = await fetchProductData(url);
       
@@ -39,10 +50,10 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
       
       let score: number;
       let aspects: {
-        materials: { score: number; maxScore: number; explanation: string };
-        manufacturing: { score: number; maxScore: number; explanation: string };
-        lifecycle: { score: number; maxScore: number; explanation: string };
-        certifications: { score: number; maxScore: number; explanation: string };
+        materials: { score: number; maxScore: number; explanation: string; shortExplanation: string };
+        manufacturing: { score: number; maxScore: number; explanation: string; shortExplanation: string };
+        lifecycle: { score: number; maxScore: number; explanation: string; shortExplanation: string };
+        certifications: { score: number; maxScore: number; explanation: string; shortExplanation: string };
       };
       
       if (cachedProduct) {
@@ -63,9 +74,23 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
           productData.title,
           productData.mainImage,
           assessment,
-          aspects,
           productData.brand
         );
+      }
+
+      // If user is authenticated, save to their history
+      if (userId) {
+        console.log(`Saving product ${productData.productId} to history for user ${userId}`);
+        await saveToUserHistory(
+          userId,
+          productData.productId,
+          productData.title,
+          productData.brand,
+          productData.mainImage,
+          score
+        );
+      } else {
+        console.log('No user ID found, skipping history save');
       }
 
       return {
