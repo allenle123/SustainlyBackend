@@ -6,7 +6,7 @@ import { getCachedProduct, cacheProductData } from './product-cache';
 import { getUserIdFromToken, saveToUserHistory } from '../../utils/supabase-client';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'http://localhost:8080',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Credentials': 'true',
@@ -84,10 +84,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
         await saveToUserHistory(
           userId,
           productData.productId,
-          productData.title,
-          productData.brand,
-          productData.mainImage,
-          score
+          url
         );
       } else {
         console.log('No user ID found, skipping history save');

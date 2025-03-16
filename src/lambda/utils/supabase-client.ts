@@ -16,22 +16,16 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey);
  * Save a product to user history
  * @param userId The user's ID
  * @param productId Product ID
- * @param productTitle Product title
- * @param productBrand Product brand
- * @param productImage Product image URL
- * @param sustainabilityScore Product sustainability score
+ * @param productUrl Amazon product URL
  */
 export const saveToUserHistory = async (
   userId: string,
   productId: string,
-  productTitle: string,
-  productBrand: string,
-  productImage: string,
-  sustainabilityScore: number
+  productUrl: string
 ): Promise<void> => {
   try {
     console.log(`Attempting to save product to history for user ${userId}`);
-    console.log('Product details:', { productId, productTitle, productBrand, sustainabilityScore });
+    console.log('Product details:', { productId, productUrl });
     
     // Use upsert to handle both insert and update in one operation
     console.log('Upserting history entry');
@@ -41,10 +35,7 @@ export const saveToUserHistory = async (
         {
           user_id: userId,
           product_id: productId,
-          product_title: productTitle,
-          product_brand: productBrand,
-          product_image: productImage,
-          sustainability_score: sustainabilityScore,
+          product_url: productUrl,
           updated_at: new Date().toISOString()
         },
         {
