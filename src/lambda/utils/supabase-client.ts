@@ -27,6 +27,20 @@ export const saveToUserHistory = async (
     console.log(`Attempting to save product to history for user ${userId}`);
     console.log('Product details:', { productId, productUrl });
     
+    // First check if this product already exists in the user's history
+    const { data: existingEntry, error: fetchError } = await supabase
+      .from('user_history')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('product_id', productId)
+      .single();
+    
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is the "no rows returned" error
+      console.error('Error checking for existing history entry:', fetchError);
+    } else if (existingEntry) {
+      console.log(`Product ${productId} already exists in user ${userId}'s history. Updating timestamp.`);
+    }
+    
     // Use upsert to handle both insert and update in one operation
     console.log('Upserting history entry');
     const { data, error } = await supabase
