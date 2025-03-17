@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { validateAmazonUrl } from './url-validator';
+import { validateAmazonUrl, extractProductIdFromUrl } from './url-validator';
 import { fetchProductData } from './product-data-fetcher';
 import { calculateSustainabilityScore } from './sustainability-calculator';
 import { getCachedProduct, cacheProductData } from './product-cache';
@@ -42,11 +42,12 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
       const userId = await getUserIdFromToken(authHeader);
       console.log('Extracted user ID:', userId);
       
-      // First fetch the product data to get the product ID
-      const productData = await fetchProductData(url);
+      // Extract product ID from URL
+      const productId = extractProductIdFromUrl(url);
+      console.log('Extracted product ID:', productId);
       
-      // Check if we have a cached result
-      const cachedProduct = await getCachedProduct(productData.productId);
+      // Check if we have a cached result first
+      const cachedProduct = await getCachedProduct(productId);
       
       let score: number;
       let aspects: {
@@ -55,15 +56,40 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
         lifecycle: { score: number; maxScore: number; explanation: string; shortExplanation: string };
         certifications: { score: number; maxScore: number; explanation: string; shortExplanation: string };
       };
+      // Use the SustainableProductData interface directly
+      let productData: {
+        productId: string;
+        title: string;
+        brand: string;
+        mainImage: string;
+        productUrl: string;
+        categories: string[];
+        featureBullets: string[];
+      };
       
       if (cachedProduct) {
         // Use cached data
-        console.log('Using cached product data for:', productData.productId);
+        console.log('Using cached product data for:', productId);
         score = cachedProduct.sustainabilityScore;
         aspects = cachedProduct.aspects;
+        
+        // Create product data from cache to use in response
+        productData = {
+          productId: productId,
+          title: cachedProduct.title,
+          brand: cachedProduct.brand,
+          mainImage: cachedProduct.mainImage,
+          productUrl: url,
+          categories: [], // Provide empty arrays for required fields
+          featureBullets: []
+        };
       } else {
+        // No cached data, fetch from Canopy API
+        console.log('No cached data found. Fetching product data for:', productId);
+        productData = await fetchProductData(url);
+        
         // Calculate new score
-        console.log('Calculating new sustainability score for:', productData.productId);
+        console.log('Calculating new sustainability score for:', productId);
         const assessment = await calculateSustainabilityScore(productData);
         score = assessment.score;
         aspects = assessment.aspects;
@@ -80,10 +106,10 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
 
       // If user is authenticated, save to their history
       if (userId) {
-        console.log(`Saving product ${productData.productId} to history for user ${userId}`);
+        console.log(`Saving product ${productId} to history for user ${userId}`);
         await saveToUserHistory(
           userId,
-          productData.productId,
+          productId,
           url
         );
       } else {
@@ -94,7 +120,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({ 
-          productId: productData.productId,
+          productId: productId,
           title: productData.title,
           brand: productData.brand,
           sustainabilityScore: score,
