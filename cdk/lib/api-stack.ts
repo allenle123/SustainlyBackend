@@ -24,7 +24,11 @@ export class ApiStack extends cdk.Stack {
       }
     });
 
-    const lambdaIntegration = new apigateway.LambdaIntegration(lambdaFunction);
+    // Configure Lambda integration with increased timeout
+    const lambdaIntegration = new apigateway.LambdaIntegration(lambdaFunction, {
+      timeout: cdk.Duration.millis(29000), // Set to maximum allowed timeout (29 seconds)
+      proxy: true
+    });
 
     const productScoreResource = api.root.addResource('product-score');
     productScoreResource.addMethod('GET', lambdaIntegration);

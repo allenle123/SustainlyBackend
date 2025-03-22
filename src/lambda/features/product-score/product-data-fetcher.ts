@@ -37,7 +37,7 @@ interface CanopyApiResponse {
 }
 
 // Mock data configuration
-const USE_MOCK_DATA = true; // Set to false to use real API
+const USE_MOCK_DATA = false; // Set to false to use real API
 
 const CANOPY_QUERY = `
   query amazonProduct($url: String!) {

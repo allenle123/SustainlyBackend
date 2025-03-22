@@ -1,12 +1,13 @@
 # Sustainly Backend
 
 ## Overview
-Sustainly is a backend service for retrieving product sustainability scores and alternative eco-friendly products.
+Sustainly is a backend service for retrieving product sustainability scores and alternative eco-friendly products. It uses Google's Gemini AI with web search capabilities to provide accurate and up-to-date sustainability information.
 
 ## Prerequisites
 - Node.js 18.x
 - AWS CDK CLI
 - AWS CLI configured with appropriate credentials
+- Google Cloud Project with Gemini API enabled (for web search capabilities)
 
 ## Setup
 1. Clone the repository
@@ -14,6 +15,7 @@ Sustainly is a backend service for retrieving product sustainability scores and 
    ```bash
    npm install
    ```
+3. Create a `.env` file based on `.env.example` and fill in your API keys and configuration
 
 ## Local Development
 - Run TypeScript compilation: `npm run build`
@@ -40,9 +42,57 @@ The `full-deploy` script combines pre-deployment tasks (cleaning and bundling) w
 ## Features
 - Product Sustainability Score Retrieval
 - Alternative Product Recommendations
+- Web-Enhanced Sustainability Assessment (using Gemini web search)
+- User History Tracking (via Supabase)
 
 ## Environment Variables
 - `DYNAMODB_TABLE`: Name of the DynamoDB table for product data
+- `GEMINI_API_KEY`: API key for Google's Gemini AI (required for web search)
+- `PROJECT_ID`: Google Cloud Project ID
+- `SUPABASE_URL`: URL for your Supabase project
+- `SUPABASE_SERVICE_KEY`: Service key for Supabase authentication
+- `USE_MOCK_DATA`: Set to 'true' to use mock data instead of real API calls
+
+## Web Search Enhancement
+Sustainly leverages Gemini's web search capabilities to find up-to-date information about products and brands. The sustainability calculator:
+
+1. Analyzes product data
+2. Dynamically searches the web for relevant sustainability information about the product and brand
+3. Provides comprehensive scoring across four sustainability aspects: Materials, Manufacturing, Lifecycle, and Certifications
+
+### Web Search Implementation Details
+
+The application uses Google's Gemini 1.5 Flash model with Google Search retrieval to enhance sustainability assessments. Key implementation details:
+
+- **Dynamic Retrieval**: The system uses a threshold-based approach (set to 0.7) to determine when web search is necessary. This balances between using the model's existing knowledge and retrieving fresh information from the web.
+
+- **API Requirements**: 
+  - Requires a Google Cloud Project with billing enabled
+  - Uses the v1beta API version
+  - Compatible with Gemini 1.5 models (not Gemini 2.0)
+
+- **Search Focus Areas**:
+  - Brand sustainability initiatives and certifications
+  - Materials used in products and their environmental impact
+  - Manufacturing processes and supply chain transparency
+  - Product lifecycle, durability, and repairability
+
+- **Response Enhancement**:
+  - When web search is used, the response includes grounding metadata
+  - Sources are tracked and logged for transparency
+  - The system automatically determines which queries to use for search
+
+### Enabling Web Search
+
+To enable web search functionality:
+
+1. Create a Google Cloud Project and enable billing
+2. Enable the Generative Language API in your project
+3. Create an API key with access to Gemini 1.5 models
+4. Set the `GEMINI_API_KEY` and `PROJECT_ID` in your `.env` file
+5. Ensure you're using `@google/generative-ai` version 0.3.0 or higher
+
+Note: Web search functionality incurs additional costs beyond the standard Gemini API usage.
 
 ## Contributing
 Please read CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests.

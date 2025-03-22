@@ -1,16 +1,36 @@
 import { GoogleGenerativeAI, HarmCategory, SafetySetting, HarmBlockThreshold } from "@google/generative-ai";
 import { SustainableProductData } from "./product-data-fetcher";
 
-// Use environment variable for API key
+// Use environment variables for API key and configuration
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_SEARCH_THRESHOLD = process.env.GEMINI_SEARCH_THRESHOLD ? 
+  parseFloat(process.env.GEMINI_SEARCH_THRESHOLD) : 0.7; // Default to 0.7 if not specified
 
 if (!GEMINI_API_KEY) {
   throw new Error('GEMINI_API_KEY is not set in the environment');
 }
 
-// Initialize Gemini AI client
+// Initialize Gemini AI client with API version
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+// Create model with Google Search retrieval configuration
+// Note: Search retrieval only works with Gemini 1.5 models
+const model = genAI.getGenerativeModel(
+  {
+    model: "gemini-1.5-flash",
+    // Use type assertion to tell TypeScript to trust our implementation
+    tools: [{
+      // Use 'as any' to bypass TypeScript type checking for this property
+      googleSearchRetrieval: {
+        dynamicRetrievalConfig: {
+          mode: "MODE_DYNAMIC", 
+          dynamicThreshold: GEMINI_SEARCH_THRESHOLD, // Use configurable threshold from environment
+        },
+      },
+    }] as any,
+  },
+  { apiVersion: "v1beta" } // Important: specify the beta API version
+);
 
 export interface SustainabilityAssessment {
   score: number;
@@ -55,8 +75,14 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       Feature Highlights:
       ${productData.featureBullets.map((bullet, index) => `${index + 1}. ${bullet}`).join('\n')}
       
+      Additional Research Needs:
+      - Research ${productData.brand}'s sustainability initiatives and certifications
+      - Look for information about the materials used in this product
+      - Search for manufacturing processes of this brand or product category
+      - Find information about product durability and lifecycle
+      
       Sustainability Assessment Guidelines:
-      Use the scoring ranges below as your primary guide. When information isn't explicitly stated, make reasonable assumptions based on:
+      Use the scoring ranges below as your primary guide. When information isn't explicitly stated, search for additional information and make reasonable assumptions based on:
       - Product category and typical industry practices
       - Brand reputation and general sustainability stance
       - Indirect indicators in product features
@@ -152,6 +178,24 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
         * Full verification (comprehensive documentation and transparency)
         * Industry-leading standards (sets new benchmarks in the industry)
 
+      WEB SEARCH INSTRUCTIONS:
+      You have access to web search capabilities. Please search for the following specific information to enhance your assessment:
+      
+      1. Search for "[Brand Name] sustainability report" or "[Brand Name] environmental impact" to find official sustainability information
+      2. Search for "[Product Name] materials composition" to find detailed information about materials used
+      3. Search for "[Brand Name] manufacturing process" or "[Brand Name] supply chain transparency" 
+      4. Search for "[Brand Name] product lifecycle" or "[Product Name] durability testing"
+      5. Search for "[Brand Name] sustainability certifications" or "[Product Name] eco certifications"
+      
+      Use the search results to find concrete evidence for your assessment. When using information from web search:
+      - IMPORTANT: For EACH piece of information from web search, include the exact URL source in [brackets]
+      - Format citations as: [Source: URL]
+      - List ALL search sources used at the end of your response in a "Sources Used" section
+      - Include the exact search queries you used to find information
+      - Prioritize recent information (within the last 2 years if possible)
+      - Compare multiple sources to verify claims when possible
+      - Be specific about which certifications or initiatives you found
+      
       Remember to:
       - Use the scoring ranges as your primary guide
       - Make reasonable assumptions when information is not explicit
@@ -185,7 +229,11 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       Score: [X/15]
       Reasoning: [Detailed explanation of which scoring range was selected and why, including both explicit evidence and reasonable inferences]
       Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
+
       ---
+      **Search Information**
+      Queries Used: [List all search queries used]
+      Sources Used: [List all sources with URLs used to inform this assessment]
     `;
 
     console.log('Gemini Prompt:', prompt);
@@ -193,29 +241,126 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
     // Call Gemini API with enhanced error handling and timeout
     let result;
     try {
+      console.log('Calling Gemini API with Google Search retrieval...');
+      
+      // Configure the request
+      const generationConfig = {
+        maxOutputTokens: 1000,
+        temperature: 0.2,
+      };
+      
+      // Configure safety settings
+      const safetySettings = [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_NONE
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_NONE
+        }
+      ] as SafetySetting[];
+      
+      // Make the API call with standard parameters
       result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens: 1000,
-        },
-        safetySettings: [
-          {
-            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-            threshold: HarmBlockThreshold.BLOCK_NONE
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-            threshold: HarmBlockThreshold.BLOCK_NONE
-          }
-        ] as SafetySetting[]
+        generationConfig,
+        safetySettings
       });
 
       // Clear timeout since we got a response
       clearTimeout(timeoutId);
-
+      
+      // Log grounding metadata if available
+      // Use type assertion to access groundingMetadata which might not be in the type definitions
+      const candidates = (result.response as any).candidates;
+      if (candidates?.[0]?.groundingMetadata) {
+        try {
+          const groundingMetadata = candidates[0].groundingMetadata;
+          const retrievalMetadata = groundingMetadata.retrievalMetadata || {};
+          const dynamicScore = retrievalMetadata.googleSearchDynamicRetrievalScore;
+          
+          if (dynamicScore !== undefined) {
+            console.log(`Response was grounded with Google Search (score: ${dynamicScore})`);
+            
+            // Check if the score is above the threshold
+            if (dynamicScore >= GEMINI_SEARCH_THRESHOLD) {
+              console.log(`Dynamic retrieval score (${dynamicScore}) is above threshold (${GEMINI_SEARCH_THRESHOLD}), search was used`);
+            } else {
+              console.log(`Dynamic retrieval score (${dynamicScore}) is below threshold (${GEMINI_SEARCH_THRESHOLD}), but search was still used`);
+            }
+          } else {
+            console.log('Response was grounded with Google Search');
+          }
+          
+          // Check for specific web search queries
+          const webSearchQueries = groundingMetadata.webSearchQueries;
+          if (webSearchQueries && Array.isArray(webSearchQueries) && webSearchQueries.length > 0) {
+            console.log('Search queries used:', webSearchQueries);
+          } else {
+            console.log('Search queries used: No specific queries found in response');
+          }
+          
+          // Check for grounding chunks/sources
+          const groundingChunks = groundingMetadata.groundingChunks || [];
+          console.log(`Number of grounding sources: ${groundingChunks.length}`);
+          
+          // Log the full metadata for reference
+          console.log('Full grounding metadata structure:', JSON.stringify(groundingMetadata, null, 2));
+          
+          // Log a more user-friendly interpretation
+          console.log('Interpretation: The model used web search to enhance its response, but specific search queries and sources are not included in the API response');
+        } catch (error) {
+          console.log('Error accessing grounding metadata details:', error);
+          console.log('Raw grounding metadata:', JSON.stringify(candidates[0].groundingMetadata));
+        }
+      } else {
+        console.log('Response was generated without Google Search grounding');
+      }
+      
       // Parse the response
       const responseText = result.response.text();
       console.log('Gemini Response:', responseText);
+      
+      // Try to extract search information from the response
+      try {
+        // Extract search queries and sources from the response
+        const searchInfoMatch = responseText.match(/\*\*Search Information\*\*([\s\S]*?)(?=\*\*|$)/i);
+        if (searchInfoMatch && searchInfoMatch[1]) {
+          const searchInfoText = searchInfoMatch[1].trim();
+          console.log('Search Information found in response:', searchInfoText);
+          
+          // Extract queries
+          const queriesMatch = searchInfoText.match(/Queries Used:([\s\S]*?)(?=Sources Used:|$)/i);
+          if (queriesMatch && queriesMatch[1]) {
+            console.log('Search Queries from response:', queriesMatch[1].trim());
+          }
+          
+          // Extract sources
+          const sourcesMatch = searchInfoText.match(/Sources Used:([\s\S]*?)$/i);
+          if (sourcesMatch && sourcesMatch[1]) {
+            console.log('Search Sources from response:', sourcesMatch[1].trim());
+          }
+        } else {
+          console.log('No Search Information section found in the response');
+        }
+        
+        // Look for citations in the format [Source: URL]
+        const citationRegex = /\[Source: (https?:\/\/[^\]]+)\]/g;
+        const citations = [];
+        let match;
+        while ((match = citationRegex.exec(responseText)) !== null) {
+          citations.push(match[1]);
+        }
+        
+        if (citations.length > 0) {
+          console.log('Citations found in response:', citations);
+        } else {
+          console.log('No citations found in response');
+        }
+      } catch (error) {
+        console.log('Error extracting search information from response:', error);
+      }
       
       // Initialize category scores and reasoning
       const categories = {
