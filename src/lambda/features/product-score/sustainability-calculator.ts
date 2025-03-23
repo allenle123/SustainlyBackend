@@ -274,11 +274,12 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       // Log grounding metadata if available
       // Use type assertion to access groundingMetadata which might not be in the type definitions
       const candidates = (result.response as any).candidates;
-      if (candidates?.[0]?.groundingMetadata) {
+      if (candidates?.[0]) {
         try {
-          const groundingMetadata = candidates[0].groundingMetadata;
-          const retrievalMetadata = groundingMetadata.retrievalMetadata || {};
-          const dynamicScore = retrievalMetadata.googleSearchDynamicRetrievalScore;
+          // Improved metadata extraction with better null handling
+          const groundingMetadata = candidates[0]?.groundingMetadata || {};
+          const retrievalMetadata = groundingMetadata?.retrievalMetadata || {};
+          const dynamicScore = retrievalMetadata?.googleSearchDynamicRetrievalScore;
           
           if (dynamicScore !== undefined) {
             console.log(`Response was grounded with Google Search (score: ${dynamicScore})`);
@@ -290,32 +291,32 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
               console.log(`Dynamic retrieval score (${dynamicScore}) is below threshold (${GEMINI_SEARCH_THRESHOLD}), but search was still used`);
             }
           } else {
-            console.log('Response was grounded with Google Search');
+            console.log('Response was grounded with Google Search (no score available)');
           }
           
-          // Check for specific web search queries
-          const webSearchQueries = groundingMetadata.webSearchQueries;
-          if (webSearchQueries && Array.isArray(webSearchQueries) && webSearchQueries.length > 0) {
+          // Check for specific web search queries with improved null handling
+          const webSearchQueries = groundingMetadata?.webSearchQueries || [];
+          if (Array.isArray(webSearchQueries) && webSearchQueries.length > 0) {
             console.log('Search queries used:', webSearchQueries);
           } else {
-            console.log('Search queries used: No specific queries found in response');
+            console.log('Search queries used: No specific queries found in response metadata');
           }
           
-          // Check for grounding chunks/sources
-          const groundingChunks = groundingMetadata.groundingChunks || [];
-          console.log(`Number of grounding sources: ${groundingChunks.length}`);
+          // Check for grounding chunks/sources with improved null handling
+          const groundingChunks = groundingMetadata?.groundingChunks || [];
+          console.log(`Number of grounding sources in metadata: ${Array.isArray(groundingChunks) ? groundingChunks.length : 0}`);
           
           // Log the full metadata for reference
           console.log('Full grounding metadata structure:', JSON.stringify(groundingMetadata, null, 2));
           
           // Log a more user-friendly interpretation
-          console.log('Interpretation: The model used web search to enhance its response, but specific search queries and sources are not included in the API response');
+          console.log('Interpretation: The model used web search to enhance its response, but specific search queries and sources may not be included in the API metadata');
         } catch (error) {
           console.log('Error accessing grounding metadata details:', error);
-          console.log('Raw grounding metadata:', JSON.stringify(candidates[0].groundingMetadata));
+          console.log('Raw grounding metadata:', JSON.stringify(candidates[0]?.groundingMetadata || {}, null, 2));
         }
       } else {
-        console.log('Response was generated without Google Search grounding');
+        console.log('Response was generated without Google Search grounding or no candidates returned');
       }
       
       // Parse the response
@@ -345,16 +346,23 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
           console.log('No Search Information section found in the response');
         }
         
-        // Look for citations in the format [Source: URL]
-        const citationRegex = /\[Source: (https?:\/\/[^\]]+)\]/g;
-        const citations = [];
-        let match;
-        while ((match = citationRegex.exec(responseText)) !== null) {
-          citations.push(match[1]);
+        // Enhanced citation detection with multiple formats
+        const citationRegexes = [
+          /\[Source: (https?:\/\/[^\]]+)\]/g,  // [Source: URL]
+          /\[(https?:\/\/[^\]]+)\]/g,          // [URL]
+          /Source: (https?:\/\/[^\s]+)/g       // Source: URL
+        ];
+        
+        const citations = new Set<string>();
+        for (const regex of citationRegexes) {
+          let match;
+          while ((match = regex.exec(responseText)) !== null) {
+            citations.add(match[1]);
+          }
         }
         
-        if (citations.length > 0) {
-          console.log('Citations found in response:', citations);
+        if (citations.size > 0) {
+          console.log('Citations found in response:', Array.from(citations));
         } else {
           console.log('No citations found in response');
         }

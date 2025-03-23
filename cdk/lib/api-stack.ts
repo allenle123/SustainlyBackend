@@ -35,5 +35,10 @@ export class ApiStack extends cdk.Stack {
 
     const alternativeProductsResource = api.root.addResource('alternative-products');
     alternativeProductsResource.addMethod('GET', lambdaIntegration);
+
+    // Add user history endpoints
+    const userHistoryResource = api.root.addResource('user-history');
+    userHistoryResource.addMethod('GET', lambdaIntegration);
+    userHistoryResource.addMethod('DELETE', lambdaIntegration);
   }
 }
