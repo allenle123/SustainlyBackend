@@ -10,6 +10,7 @@ export interface CachedProductData {
   brand: string;      // Product brand
   sustainabilityScore: number;
   mainImage: string;
+  categories: string[]; // Product categories
   aspects: {
     materials: {
       score: number;
@@ -57,7 +58,8 @@ export async function cacheProductData(
   title: string,
   mainImage: string,
   assessment: SustainabilityAssessment,
-  brand: string
+  brand: string,
+  categories: string[] = []
 ): Promise<void> {
   const item: CachedProductData = {
     productId,
@@ -65,6 +67,7 @@ export async function cacheProductData(
     brand,
     sustainabilityScore: assessment.score,
     mainImage,
+    categories,
     aspects: {
       materials: {
         score: assessment.aspects.materials.score,

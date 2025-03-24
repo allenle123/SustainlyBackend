@@ -1,23 +1,23 @@
 export const MOCK_RESPONSE = {
   data: {
     amazonProduct: {
-      title: "S.M.S.L SU-1 MQA MQA-CD Audio Decoder AK4493S XU316 768kHz/32Bit Hi-Res DAC",
-      brand: "Fanmusic",
-      mainImageUrl: "https://m.media-amazon.com/images/I/31yk-mEbtrL.jpg",
+      title: "EcoBloom Bamboo Shower Caddy Organizer, Expandable Bathroom Storage Shelf with Adjustable Height, Sustainable Bath Accessories",
+      brand: "EcoBloom",
+      mainImageUrl: "https://m.media-amazon.com/images/I/71zHjSPFvML.jpg",
       categories: [
-        { name: "All Departments" },
-        { name: "Industrial & Scientific" },
-        { name: "Industrial Electrical" },
-        { name: "Semiconductor Products" },
-        { name: "Signal Components" },
-        { name: "Signal Converters" }
+        { name: "Home & Kitchen" },
+        { name: "Bath" },
+        { name: "Bathroom Accessories" },
+        { name: "Shower Accessories" },
+        { name: "Shower Caddies" }
       ],
-      asin: "B0C1Y7C9HH",
+      asin: "B0CXRP7T2L",
       featureBullets: [
-        "USB In:Compatible with Windows 7/8/8.1/10/11 (driver is required)",
-        "Mac 0S X10.6+, Linux(driverless), Android, i0s",
-        "AKM AK4493S :SU-1 utilizes the latest AKM DAC chip",
-        "Support MQA CD:CD Player + MQA- Enabled DAC"
+        " SUSTAINABLE MATERIALS: Made from 100% renewable bamboo, a fast-growing resource that requires no pesticides and minimal water to cultivate.",
+        " ADJUSTABLE DESIGN: Expandable height from 25\" to 40\" to fit any shower space, with 3 adjustable shelves for customized storage.",
+        " WATER-RESISTANT FINISH: Treated with eco-friendly water-resistant coating that prevents mold and mildew without harmful chemicals.",
+        " TOOL-FREE ASSEMBLY: Simple setup in minutes with no tools required, saving time and reducing packaging waste.",
+        " PLASTIC-FREE PACKAGING: Ships in 100% recyclable and biodegradable packaging materials, reducing environmental impact."
       ]
     }
   }

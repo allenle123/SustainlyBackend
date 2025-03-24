@@ -6,7 +6,7 @@ import { getCachedProduct, cacheProductData } from './product-cache';
 import { getUserIdFromToken, saveToUserHistory } from '../../utils/supabase-client';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'http://localhost:8081',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Credentials': 'true',
@@ -74,7 +74,8 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
           productData.title,
           productData.mainImage,
           assessment,
-          productData.brand
+          productData.brand,
+          productData.categories
         );
       }
 
@@ -99,6 +100,7 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
           brand: productData.brand,
           sustainabilityScore: score,
           mainImage: productData.mainImage,
+          categories: productData.categories,
           aspects
         })
       };
