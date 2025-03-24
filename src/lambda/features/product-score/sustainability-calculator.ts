@@ -181,7 +181,7 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       WEB SEARCH INSTRUCTIONS:
       You have access to web search capabilities. Please search for the following specific information to enhance your assessment:
       
-      1. Search for "[Brand Name] sustainability report" or "[Brand Name] environmental impact" to find official sustainability information
+      1. Search for "[Brand Name] sustainability report" or "[Brand Name] environmental impact" to find sustainability information
       2. Search for "[Product Name] materials composition" to find detailed information about materials used
       3. Search for "[Brand Name] manufacturing process" or "[Brand Name] supply chain transparency" 
       4. Search for "[Brand Name] product lifecycle" or "[Product Name] durability testing"
@@ -204,30 +204,80 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       - Balance strictness with fairness in scoring
       - Provide concrete data points whenever possible
       - Explain exactly how you calculated the score for each aspect
+      - DO NOT include the source of information (e.g., "According to the product description..." or "Based on the feature bullets...")
+      - Present all information as direct statements without referencing where it came from
 
       Output format must follow this exact structure:
 
       **Aspect: Materials**
       Score: [X/35]
-      Reasoning: [Detailed explanation of which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Reasoning: 
+      [INCLUDE ONLY IF THERE ARE POSITIVE POINTS]
+      POSITIVES:
+      • [Bullet point of positive factor 1]
+      • [Bullet point of positive factor 2]
+      [/INCLUDE]
+      
+      [INCLUDE ONLY IF THERE ARE NEGATIVE POINTS]
+      NEGATIVES:
+      • [Bullet point of negative factor 1]
+      • [Bullet point of negative factor 2]
+      [/INCLUDE]
+      
       Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
 
       ---
       **Aspect: Manufacturing**
       Score: [X/25]
-      Reasoning: [Detailed explanation of which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Reasoning: 
+      [INCLUDE ONLY IF THERE ARE POSITIVE POINTS]
+      POSITIVES:
+      • [Bullet point of positive factor 1]
+      • [Bullet point of positive factor 2]
+      [/INCLUDE]
+      
+      [INCLUDE ONLY IF THERE ARE NEGATIVE POINTS]
+      NEGATIVES:
+      • [Bullet point of negative factor 1]
+      • [Bullet point of negative factor 2]
+      [/INCLUDE]
+      
       Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
 
       ---
       **Aspect: Lifecycle**
       Score: [X/25]
-      Reasoning: [Detailed explanation of which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Reasoning: 
+      [INCLUDE ONLY IF THERE ARE POSITIVE POINTS]
+      POSITIVES:
+      • [Bullet point of positive factor 1]
+      • [Bullet point of positive factor 2]
+      [/INCLUDE]
+      
+      [INCLUDE ONLY IF THERE ARE NEGATIVE POINTS]
+      NEGATIVES:
+      • [Bullet point of negative factor 1]
+      • [Bullet point of negative factor 2]
+      [/INCLUDE]
+      
       Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
 
       ---
       **Aspect: Certifications**
       Score: [X/15]
-      Reasoning: [Detailed explanation of which scoring range was selected and why, including both explicit evidence and reasonable inferences]
+      Reasoning: 
+      [INCLUDE ONLY IF THERE ARE POSITIVE POINTS]
+      POSITIVES:
+      • [Bullet point of positive factor 1]
+      • [Bullet point of positive factor 2]
+      [/INCLUDE]
+      
+      [INCLUDE ONLY IF THERE ARE NEGATIVE POINTS]
+      NEGATIVES:
+      • [Bullet point of negative factor 1]
+      • [Bullet point of negative factor 2]
+      [/INCLUDE]
+      
       Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
 
       ---
@@ -383,7 +433,7 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       aspects.forEach(aspect => {
         const aspectName = aspect.match(/\*\*Aspect: ([^*]+)\*\*/i)?.[1]?.toLowerCase().trim();
         const scoreMatch = aspect.match(/Score:\s*\[?(\d+)\/(\d+)\]?/);
-        const reasoningMatch = aspect.match(/Reasoning:\s*([^\n]+)/);
+        const reasoningMatch = aspect.match(/Reasoning:\s*([\s\S]*?)Short Reasoning:/);
         const shortReasoningMatch = aspect.match(/Short Reasoning:\s*([^\n]+)/);
 
         if (aspectName && scoreMatch && reasoningMatch) {
