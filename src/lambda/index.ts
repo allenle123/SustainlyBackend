@@ -7,12 +7,12 @@ config({ path: resolve(__dirname, '../../.env') });
 
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { getProductScore } from './features/product-score/product-score-handler';
-import { getAlternativeProducts } from './features/alternative-products/alternative-products-handler';
+// import { getAlternativeProducts } from './features/alternative-products/alternative-products-handler';
 import { getUserHistory, clearUserHistory } from './features/user-history/user-history-handler';
 
 // Define CORS headers
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'http://localhost:8080',
+  'Access-Control-Allow-Origin': 'http://localhost:8081',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Credentials': 'true',
@@ -53,8 +53,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     // Route to the appropriate handler based on the path and method
     if (path === '/product-score' && method === 'GET') {
       return await getProductScore(event);
-    } else if (path === '/alternative-products' && method === 'GET') {
-      return await getAlternativeProducts(event);
+    // } else if (path === '/alternative-products' && method === 'GET') {
+    //   return await getAlternativeProducts(event);
     } else if (path === '/user-history' && method === 'GET') {
       return await getUserHistory(event);
     } else if (path === '/user-history' && method === 'DELETE') {
