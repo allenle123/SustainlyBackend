@@ -40,8 +40,8 @@ export class LambdaStack extends cdk.Stack {
         SUPABASE_URL: process.env.SUPABASE_URL || '',
         SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || ''
       },
-      memorySize: 512,
-      timeout: cdk.Duration.seconds(30)
+      memorySize: 1024, // Increased from 512MB to 1024MB for better performance
+      timeout: cdk.Duration.seconds(60) // Increased from 30 seconds to 60 seconds
     });
 
     // Grant the Lambda function read/write permissions to the DynamoDB table

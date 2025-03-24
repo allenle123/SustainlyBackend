@@ -7,7 +7,8 @@ config({ path: resolve(__dirname, '../../.env') });
 
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { getProductScore } from './features/product-score/product-score-handler';
-import { getAlternativeProducts } from './features/product-score/get-alternative-products';
+import { getAlternativeProducts } from './features/alternative-products/alternative-products-handler';
+import { getUserHistory, clearUserHistory } from './features/user-history/user-history-handler';
 
 // Define CORS headers
 const corsHeaders = {
@@ -49,21 +50,25 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       };
     }
 
-    switch (true) {
-      case path.includes('/product-score') && method === 'GET':
-        return await getProductScore(event);
-      case path.includes('/alternative-products') && method === 'GET':
-        return await getAlternativeProducts(event);
-      default:
-        console.warn('Unhandled route:', { path, method });
-        return {
-          statusCode: 404,
-          headers: corsHeaders,
-          body: JSON.stringify({ 
-            message: 'Not Found',
-            details: { path, method }
-          }),
-        };
+    // Route to the appropriate handler based on the path and method
+    if (path === '/product-score' && method === 'GET') {
+      return await getProductScore(event);
+    } else if (path === '/alternative-products' && method === 'GET') {
+      return await getAlternativeProducts(event);
+    } else if (path === '/user-history' && method === 'GET') {
+      return await getUserHistory(event);
+    } else if (path === '/user-history' && method === 'DELETE') {
+      return await clearUserHistory(event);
+    } else {
+      console.warn('Unhandled route:', { path, method });
+      return {
+        statusCode: 404,
+        headers: corsHeaders,
+        body: JSON.stringify({ 
+          message: 'Not Found',
+          details: { path, method }
+        }),
+      };
     }
   } catch (error) {
     console.error('Error processing request:', {
