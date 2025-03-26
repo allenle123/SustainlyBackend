@@ -88,6 +88,18 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       - Indirect indicators in product features
       - Similar products in the market
       - Concrete data and statistics when available
+      
+      IMPORTANT SCORING RULES:
+      - Do NOT deduct points for unknown or ambiguous information
+      - Only deduct points for confirmed negative aspects
+      - Give full credit for positive aspects, even if they lack complete verification
+      - When information is missing or unclear, assume a neutral stance rather than a negative one
+      - Ambiguity about a positive aspect should not be counted as a negative
+      - Focus on what is known rather than what is unknown
+      - CRITICAL: If something is listed as a positive aspect, DO NOT list it as a negative aspect just because it lacks verification
+      - CRITICAL: Never create a negative aspect that references a positive aspect (e.g., don't say "X is not completely verified" if X is listed as a positive)
+      - CRITICAL: If the score for any aspect is not a perfect score (not maximum points), you MUST include at least one or two negative factors and/or uncertain factors for that aspect
+      - CRITICAL: If the score for an aspect is not in the highest scoring range (Materials: <27, Manufacturing: <20, Lifecycle: <20, Certifications: <12), limit the positive bullet points to a MAXIMUM of 4
 
       **Aspect: Materials** (35 points max)
       Scoring Ranges:
@@ -206,6 +218,7 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       - Explain exactly how you calculated the score for each aspect
       - DO NOT include the source of information (e.g., "According to the product description..." or "Based on the feature bullets...")
       - Present all information as direct statements without referencing where it came from
+      - IMPORTANT: If the score for any aspect is not a perfect score (not maximum points), you MUST include at least one or two negative factors and/or uncertain factors for that aspect
 
       Output format must follow this exact structure:
 
@@ -218,10 +231,16 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       • [Bullet point of positive factor 2]
       [/INCLUDE]
       
-      [INCLUDE ONLY IF THERE ARE NEGATIVE POINTS]
+      [INCLUDE ONLY IF THERE ARE CONFIRMED NEGATIVE POINTS - NEVER REFERENCE POSITIVES HERE]
       NEGATIVES:
-      • [Bullet point of negative factor 1]
-      • [Bullet point of negative factor 2]
+      • [Bullet point of confirmed negative factor 1 - must be a completely separate issue from any positive]
+      • [Bullet point of confirmed negative factor 2 - must be a completely separate issue from any positive]
+      [/INCLUDE]
+      
+      [INCLUDE ONLY IF THERE ARE FACTORS THAT CANNOT BE CLASSIFIED AS POSITIVE OR NEGATIVE]
+      UNCERTAIN:
+      • [Bullet point of uncertain factor 1]
+      • [Bullet point of uncertain factor 2]
       [/INCLUDE]
       
       Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
@@ -236,10 +255,16 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       • [Bullet point of positive factor 2]
       [/INCLUDE]
       
-      [INCLUDE ONLY IF THERE ARE NEGATIVE POINTS]
+      [INCLUDE ONLY IF THERE ARE CONFIRMED NEGATIVE POINTS - NEVER REFERENCE POSITIVES HERE]
       NEGATIVES:
-      • [Bullet point of negative factor 1]
-      • [Bullet point of negative factor 2]
+      • [Bullet point of confirmed negative factor 1 - must be a completely separate issue from any positive]
+      • [Bullet point of confirmed negative factor 2 - must be a completely separate issue from any positive]
+      [/INCLUDE]
+      
+      [INCLUDE ONLY IF THERE ARE FACTORS THAT CANNOT BE CLASSIFIED AS POSITIVE OR NEGATIVE]
+      UNCERTAIN:
+      • [Bullet point of uncertain factor 1]
+      • [Bullet point of uncertain factor 2]
       [/INCLUDE]
       
       Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
@@ -254,10 +279,16 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       • [Bullet point of positive factor 2]
       [/INCLUDE]
       
-      [INCLUDE ONLY IF THERE ARE NEGATIVE POINTS]
+      [INCLUDE ONLY IF THERE ARE CONFIRMED NEGATIVE POINTS - NEVER REFERENCE POSITIVES HERE]
       NEGATIVES:
-      • [Bullet point of negative factor 1]
-      • [Bullet point of negative factor 2]
+      • [Bullet point of confirmed negative factor 1 - must be a completely separate issue from any positive]
+      • [Bullet point of confirmed negative factor 2 - must be a completely separate issue from any positive]
+      [/INCLUDE]
+      
+      [INCLUDE ONLY IF THERE ARE FACTORS THAT CANNOT BE CLASSIFIED AS POSITIVE OR NEGATIVE]
+      UNCERTAIN:
+      • [Bullet point of uncertain factor 1]
+      • [Bullet point of uncertain factor 2]
       [/INCLUDE]
       
       Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
@@ -272,10 +303,16 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       • [Bullet point of positive factor 2]
       [/INCLUDE]
       
-      [INCLUDE ONLY IF THERE ARE NEGATIVE POINTS]
+      [INCLUDE ONLY IF THERE ARE CONFIRMED NEGATIVE POINTS - NEVER REFERENCE POSITIVES HERE]
       NEGATIVES:
-      • [Bullet point of negative factor 1]
-      • [Bullet point of negative factor 2]
+      • [Bullet point of confirmed negative factor 1 - must be a completely separate issue from any positive]
+      • [Bullet point of confirmed negative factor 2 - must be a completely separate issue from any positive]
+      [/INCLUDE]
+      
+      [INCLUDE ONLY IF THERE ARE FACTORS THAT CANNOT BE CLASSIFIED AS POSITIVE OR NEGATIVE]
+      UNCERTAIN:
+      • [Bullet point of uncertain factor 1]
+      • [Bullet point of uncertain factor 2]
       [/INCLUDE]
       
       Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
@@ -440,7 +477,19 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
           const categoryKey = aspectName.toLowerCase().replace(/[^a-z]/g, '') as keyof typeof categories;
           if (categories[categoryKey]) {
             categories[categoryKey].score = parseInt(scoreMatch[1], 10);
-            categories[categoryKey].explanation = reasoningMatch[1].trim();
+            
+            // Extract the full reasoning text
+            let fullExplanation = reasoningMatch[1].trim();
+            
+            // Check if there's an UNCERTAIN section and include it in the explanation
+            // but make it clear that these factors were not counted against the score
+            const uncertainMatch = fullExplanation.match(/UNCERTAIN:([\s\S]*?)(?=POSITIVES:|NEGATIVES:|$)/i);
+            if (uncertainMatch && uncertainMatch[1].trim()) {
+              // Add a note that these factors were not counted against the score
+              fullExplanation += "\n\nNote: The uncertain factors listed above were not counted against the score.";
+            }
+            
+            categories[categoryKey].explanation = fullExplanation;
             categories[categoryKey].shortExplanation = shortReasoningMatch ? shortReasoningMatch[1].trim() : reasoningMatch[1].trim().substring(0, 100) + '...';
           }
         }
