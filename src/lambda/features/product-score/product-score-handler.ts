@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { validateAmazonUrl } from './url-validator';
 import { fetchProductData } from './product-data-fetcher';
-import { calculateSustainabilityScore } from './sustainability-calculator';
+import { calculateSustainabilityScore, SustainabilityTip } from './sustainability-calculator';
 import { getCachedProduct, cacheProductData } from './product-cache';
 import { getUserIdFromToken, saveToUserHistory } from '../../utils/supabase-client';
 
@@ -55,18 +55,21 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
         lifecycle: { score: number; maxScore: number; explanation: string; shortExplanation: string };
         certifications: { score: number; maxScore: number; explanation: string; shortExplanation: string };
       };
+      let sustainabilityTips: SustainabilityTip[] = [];
       
       if (cachedProduct) {
         // Use cached data
         console.log('Using cached product data for:', productData.productId);
         score = cachedProduct.sustainabilityScore;
         aspects = cachedProduct.aspects;
+        sustainabilityTips = cachedProduct.sustainabilityTips || [];
       } else {
         // Calculate new score
         console.log('Calculating new sustainability score for:', productData.productId);
         const assessment = await calculateSustainabilityScore(productData);
         score = assessment.score;
         aspects = assessment.aspects;
+        sustainabilityTips = assessment.sustainabilityTips;
         
         // Cache the results
         await cacheProductData(
@@ -101,7 +104,8 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
           sustainabilityScore: score,
           mainImage: productData.mainImage,
           categories: productData.categories,
-          aspects
+          aspects,
+          sustainabilityTips
         })
       };
     } catch (error: unknown) {
@@ -120,7 +124,13 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
             sustainabilityKeywords: [],
             materialFeatures: []
           },
-          sustainabilityReasoning: 'Unable to generate sustainability assessment'
+          sustainabilityReasoning: 'Unable to generate sustainability assessment',
+          sustainabilityTips: [
+            { tip: "Use this product as intended to maximize its lifespan and efficiency.", category: 'usage' },
+            { tip: "Follow the manufacturer's maintenance guidelines to extend the product's life.", category: 'maintenance' },
+            { tip: "Check local recycling guidelines for proper disposal of this product.", category: 'disposal' },
+            { tip: "Consider the environmental impact when purchasing similar products in the future.", category: 'general' }
+          ]
         })
       };
     }
@@ -140,7 +150,13 @@ export const getProductScore = async (event: APIGatewayProxyEvent): Promise<APIG
           sustainabilityKeywords: [],
           materialFeatures: []
         },
-        sustainabilityReasoning: 'Unable to generate sustainability assessment'
+        sustainabilityReasoning: 'Unable to generate sustainability assessment',
+        sustainabilityTips: [
+          { tip: "Use this product as intended to maximize its lifespan and efficiency.", category: 'usage' },
+          { tip: "Follow the manufacturer's maintenance guidelines to extend the product's life.", category: 'maintenance' },
+          { tip: "Check local recycling guidelines for proper disposal of this product.", category: 'disposal' },
+          { tip: "Consider the environmental impact when purchasing similar products in the future.", category: 'general' }
+        ]
       })
     };
   }

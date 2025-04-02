@@ -1,5 +1,5 @@
 import { DynamoDB } from 'aws-sdk';
-import { SustainabilityAssessment } from './sustainability-calculator';
+import { SustainabilityAssessment, SustainabilityTip } from './sustainability-calculator';
 
 const dynamoDB = new DynamoDB.DocumentClient();
 const TABLE_NAME = process.env.DYNAMODB_TABLE || '';
@@ -37,6 +37,7 @@ export interface CachedProductData {
       shortExplanation: string;
     };
   };
+  sustainabilityTips: SustainabilityTip[];
 }
 
 export async function getCachedProduct(productId: string): Promise<CachedProductData | null> {
@@ -93,7 +94,8 @@ export async function cacheProductData(
         explanation: assessment.aspects.certifications.explanation,
         shortExplanation: assessment.aspects.certifications.shortExplanation
       }
-    }
+    },
+    sustainabilityTips: assessment.sustainabilityTips
   };
 
   try {

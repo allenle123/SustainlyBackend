@@ -32,6 +32,11 @@ const model = genAI.getGenerativeModel(
   { apiVersion: "v1beta" } // Important: specify the beta API version
 );
 
+export interface SustainabilityTip {
+  tip: string;
+  category: 'usage' | 'maintenance' | 'disposal' | 'general';
+}
+
 export interface SustainabilityAssessment {
   score: number;
   aspects: {
@@ -40,6 +45,7 @@ export interface SustainabilityAssessment {
     lifecycle: { score: number; maxScore: number; explanation: string; shortExplanation: string };
     certifications: { score: number; maxScore: number; explanation: string; shortExplanation: string };
   };
+  sustainabilityTips: SustainabilityTip[];
 }
 
 export async function calculateSustainabilityScore(productData: SustainableProductData): Promise<SustainabilityAssessment> {
@@ -57,7 +63,8 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
           manufacturing: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
           lifecycle: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
           certifications: { score: 0, maxScore: 15, explanation: '', shortExplanation: '' }
-        }
+        },
+        sustainabilityTips: []
       };
     }
 
@@ -144,7 +151,8 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       - 20-25 points: Renewable energy, zero waste
         * Renewable energy usage (>70% renewable energy in production)
         * Zero-waste practices (>90% waste diverted from landfill)
-        * Innovative production methods (closed-loop systems, carbon-negative processes)
+        * Closed-loop manufacturing (reusing waste materials)
+        * Carbon-neutral or carbon-negative operations
 
       **Aspect: Lifecycle** (25 points max)
       Scoring Ranges:
@@ -243,7 +251,7 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       • [Bullet point of uncertain factor 2]
       [/INCLUDE]
       
-      Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
+      Short Reasoning: [VERY BRIEF 1-2 sentence summary, maximum 150 characters. Focus on key positives and negatives only.]
 
       ---
       **Aspect: Manufacturing**
@@ -267,7 +275,7 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       • [Bullet point of uncertain factor 2]
       [/INCLUDE]
       
-      Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
+      Short Reasoning: [VERY BRIEF 1-2 sentence summary, maximum 150 characters. Focus on key positives and negatives only.]
 
       ---
       **Aspect: Lifecycle**
@@ -291,7 +299,7 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       • [Bullet point of uncertain factor 2]
       [/INCLUDE]
       
-      Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
+      Short Reasoning: [VERY BRIEF 1-2 sentence summary, maximum 150 characters. Focus on key positives and negatives only.]
 
       ---
       **Aspect: Certifications**
@@ -315,7 +323,23 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       • [Bullet point of uncertain factor 2]
       [/INCLUDE]
       
-      Short Reasoning: [Brief 1-2 sentence summary of key factors affecting the score]
+      Short Reasoning: [VERY BRIEF 1-2 sentence summary, maximum 150 characters. Focus on key positives and negatives only.]
+
+      ---
+      **Sustainability Tips**
+      Please provide 3-5 practical sustainability tips related to this specific product. Include tips for:
+      
+      1. Usage: How to use the product in a more sustainable way
+      2. Maintenance: How to maintain the product to extend its lifespan
+      3. Disposal: How to properly dispose of or recycle the product at end-of-life
+      4. General: Other sustainability tips related to this product category
+      
+      Format each tip as follows:
+      
+      USAGE: [Tip about sustainable usage]
+      MAINTENANCE: [Tip about sustainable maintenance]
+      DISPOSAL: [Tip about sustainable disposal]
+      GENERAL: [General sustainability tip]
 
       ---
       **Search Information**
@@ -465,6 +489,9 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
         certifications: { maxScore: 15, score: 0, explanation: '', shortExplanation: '' }
       };
 
+      // Initialize sustainability tips array
+      const sustainabilityTips: SustainabilityTip[] = [];
+
       // Extract scores and reasoning for each aspect
       const aspects = responseText.split('---').filter(Boolean);
       aspects.forEach(aspect => {
@@ -490,7 +517,64 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
             }
             
             categories[categoryKey].explanation = fullExplanation;
-            categories[categoryKey].shortExplanation = shortReasoningMatch ? shortReasoningMatch[1].trim() : reasoningMatch[1].trim().substring(0, 100) + '...';
+            categories[categoryKey].shortExplanation = shortReasoningMatch ? shortReasoningMatch[1].trim() : 'Score based on product analysis.';
+          }
+        }
+        
+        // Extract sustainability tips
+        if (aspect.includes('**Sustainability Tips**')) {
+          // Extract usage tips
+          const usageMatches = aspect.matchAll(/USAGE:\s*([^\n]+)/g);
+          for (const match of usageMatches) {
+            if (match[1]) {
+              sustainabilityTips.push({
+                tip: match[1].trim(),
+                category: 'usage'
+              });
+            }
+          }
+          
+          // Extract maintenance tips
+          const maintenanceMatches = aspect.matchAll(/MAINTENANCE:\s*([^\n]+)/g);
+          for (const match of maintenanceMatches) {
+            if (match[1]) {
+              sustainabilityTips.push({
+                tip: match[1].trim(),
+                category: 'maintenance'
+              });
+            }
+          }
+          
+          // Extract disposal tips
+          const disposalMatches = aspect.matchAll(/DISPOSAL:\s*([^\n]+)/g);
+          for (const match of disposalMatches) {
+            if (match[1]) {
+              sustainabilityTips.push({
+                tip: match[1].trim(),
+                category: 'disposal'
+              });
+            }
+          }
+          
+          // Extract general tips
+          const generalMatches = aspect.matchAll(/GENERAL:\s*([^\n]+)/g);
+          for (const match of generalMatches) {
+            if (match[1]) {
+              sustainabilityTips.push({
+                tip: match[1].trim(),
+                category: 'general'
+              });
+            }
+          }
+          
+          // If no tips were found, add default tips based on product category
+          if (sustainabilityTips.length === 0) {
+            sustainabilityTips.push(
+              { tip: "Use this product as intended to maximize its lifespan and efficiency.", category: 'usage' },
+              { tip: "Follow the manufacturer's maintenance guidelines to extend the product's life.", category: 'maintenance' },
+              { tip: "Check local recycling guidelines for proper disposal of this product.", category: 'disposal' },
+              { tip: "Consider the environmental impact when purchasing similar products in the future.", category: 'general' }
+            );
           }
         }
       });
@@ -525,7 +609,8 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
             explanation: categories.certifications.explanation,
             shortExplanation: categories.certifications.shortExplanation
           }
-        }
+        },
+        sustainabilityTips
       };
 
     } catch (apiError: any) {
@@ -552,35 +637,16 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
           manufacturing: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
           lifecycle: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
           certifications: { score: 0, maxScore: 15, explanation: '', shortExplanation: '' }
-        }
+        },
+        sustainabilityTips: [
+          { tip: "Use this product as intended to maximize its lifespan and efficiency.", category: 'usage' },
+          { tip: "Follow the manufacturer's maintenance guidelines to extend the product's life.", category: 'maintenance' },
+          { tip: "Check local recycling guidelines for proper disposal of this product.", category: 'disposal' },
+          { tip: "Consider the environmental impact when purchasing similar products in the future.", category: 'general' }
+        ]
       };
-    } finally {
-      // Ensure timeout is cleared
-      clearTimeout(timeoutId);
     }
-
-  } catch (error: any) {
-    // Clear the timeout to prevent memory leaks
+  } finally {
     clearTimeout(timeoutId);
-
-    // Comprehensive top-level error logging
-    console.error('Unexpected error in sustainability scoring:', {
-      errorName: error.name,
-      errorMessage: error.message,
-      errorStack: error.stack,
-      isTimeout: error.name === 'AbortError' || error.message.includes('timeout'),
-      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
-    });
-    
-    // Fallback response
-    return {
-      score: 50,
-      aspects: {
-        materials: { score: 0, maxScore: 35, explanation: '', shortExplanation: '' },
-        manufacturing: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
-        lifecycle: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
-        certifications: { score: 0, maxScore: 15, explanation: '', shortExplanation: '' }
-      }
-    };
   }
 }
