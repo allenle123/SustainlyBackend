@@ -9,26 +9,26 @@ const app = new cdk.App();
 
 // Create DynamoDB stack
 const dynamoDBStack = new DynamoDBStack(app, 'SustainlyDynamoDBStack', {
-  env: { 
-    account: process.env.CDK_DEFAULT_ACCOUNT, 
-    region: process.env.CDK_DEFAULT_REGION 
-  }
+    env: {
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+        region: process.env.CDK_DEFAULT_REGION,
+    },
 });
 
 // Create Lambda stack with DynamoDB table
 const lambdaStack = new LambdaStack(app, 'SustainlyLambdaStack', {
-  env: { 
-    account: process.env.CDK_DEFAULT_ACCOUNT, 
-    region: process.env.CDK_DEFAULT_REGION 
-  },
-  dynamoDBTable: dynamoDBStack.table
+    env: {
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+        region: process.env.CDK_DEFAULT_REGION,
+    },
+    dynamoDBTable: dynamoDBStack.table,
 });
 
 // Create API Gateway stack
 new ApiStack(app, 'SustainlyApiStack', {
-  env: { 
-    account: process.env.CDK_DEFAULT_ACCOUNT, 
-    region: process.env.CDK_DEFAULT_REGION 
-  },
-  lambdaFunction: lambdaStack.function
+    env: {
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+        region: process.env.CDK_DEFAULT_REGION,
+    },
+    lambdaFunction: lambdaStack.function,
 });

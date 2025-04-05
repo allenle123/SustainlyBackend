@@ -1,13 +1,19 @@
-import { GoogleGenerativeAI, HarmCategory, SafetySetting, HarmBlockThreshold } from "@google/generative-ai";
-import { SustainableProductData } from "./product-data-fetcher";
+import {
+    GoogleGenerativeAI,
+    HarmCategory,
+    SafetySetting,
+    HarmBlockThreshold,
+} from '@google/generative-ai';
+import { SustainableProductData } from './product-data-fetcher';
 
 // Use environment variables for API key and configuration
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_SEARCH_THRESHOLD = process.env.GEMINI_SEARCH_THRESHOLD ? 
-  parseFloat(process.env.GEMINI_SEARCH_THRESHOLD) : 0.7; // Default to 0.7 if not specified
+const GEMINI_SEARCH_THRESHOLD = process.env.GEMINI_SEARCH_THRESHOLD
+    ? parseFloat(process.env.GEMINI_SEARCH_THRESHOLD)
+    : 0.7; // Default to 0.7 if not specified
 
 if (!GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is not set in the environment');
+    throw new Error('GEMINI_API_KEY is not set in the environment');
 }
 
 // Initialize Gemini AI client with API version
@@ -16,60 +22,94 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 // Create model with Google Search retrieval configuration
 // Note: Search retrieval only works with Gemini 1.5 models
 const model = genAI.getGenerativeModel(
-  {
-    model: "gemini-1.5-flash",
-    // Use type assertion to tell TypeScript to trust our implementation
-    tools: [{
-      // Use 'as any' to bypass TypeScript type checking for this property
-      googleSearchRetrieval: {
-        dynamicRetrievalConfig: {
-          mode: "MODE_DYNAMIC", 
-          dynamicThreshold: GEMINI_SEARCH_THRESHOLD, // Use configurable threshold from environment
-        },
-      },
-    }] as any,
-  },
-  { apiVersion: "v1beta" } // Important: specify the beta API version
+    {
+        model: 'gemini-1.5-flash',
+        // Use type assertion to tell TypeScript to trust our implementation
+        tools: [
+            {
+                // Use 'as any' to bypass TypeScript type checking for this property
+                googleSearchRetrieval: {
+                    dynamicRetrievalConfig: {
+                        mode: 'MODE_DYNAMIC',
+                        dynamicThreshold: GEMINI_SEARCH_THRESHOLD, // Use configurable threshold from environment
+                    },
+                },
+            },
+        ] as any,
+    },
+    { apiVersion: 'v1beta' } // Important: specify the beta API version
 );
 
 export interface SustainabilityTip {
-  tip: string;
-  category: 'usage' | 'maintenance' | 'disposal' | 'general';
+    tip: string;
+    category: 'usage' | 'maintenance' | 'disposal' | 'general';
 }
 
 export interface SustainabilityAssessment {
-  score: number;
-  aspects: {
-    materials: { score: number; maxScore: number; explanation: string; shortExplanation: string };
-    manufacturing: { score: number; maxScore: number; explanation: string; shortExplanation: string };
-    lifecycle: { score: number; maxScore: number; explanation: string; shortExplanation: string };
-    certifications: { score: number; maxScore: number; explanation: string; shortExplanation: string };
-  };
-  sustainabilityTips: SustainabilityTip[];
+    score: number;
+    aspects: {
+        materials: {
+            score: number;
+            maxScore: number;
+            explanation: string;
+            shortExplanation: string;
+        };
+        manufacturing: {
+            score: number;
+            maxScore: number;
+            explanation: string;
+            shortExplanation: string;
+        };
+        lifecycle: {
+            score: number;
+            maxScore: number;
+            explanation: string;
+            shortExplanation: string;
+        };
+        certifications: {
+            score: number;
+            maxScore: number;
+            explanation: string;
+            shortExplanation: string;
+        };
+    };
+    sustainabilityTips: SustainabilityTip[];
 }
 
-export async function calculateSustainabilityScore(productData: SustainableProductData): Promise<SustainabilityAssessment> {
-  // Create an abort controller to handle timeouts more explicitly
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 55000); // 55 seconds timeout
+export async function calculateSustainabilityScore(
+    productData: SustainableProductData
+): Promise<SustainabilityAssessment> {
+    // Create an abort controller to handle timeouts more explicitly
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 55000); // 55 seconds timeout
 
-  try {
-    // Basic validation of product data
-    if (!productData || Object.keys(productData).length === 0) {
-      return {
-        score: 50,
-        aspects: {
-          materials: { score: 0, maxScore: 35, explanation: '', shortExplanation: '' },
-          manufacturing: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
-          lifecycle: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
-          certifications: { score: 0, maxScore: 15, explanation: '', shortExplanation: '' }
-        },
-        sustainabilityTips: []
-      };
-    }
+    try {
+        // Basic validation of product data
+        if (!productData || Object.keys(productData).length === 0) {
+            return {
+                score: 50,
+                aspects: {
+                    materials: { score: 0, maxScore: 35, explanation: '', shortExplanation: '' },
+                    manufacturing: {
+                        score: 0,
+                        maxScore: 25,
+                        explanation: '',
+                        shortExplanation: '',
+                    },
+                    lifecycle: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
+                    certifications: {
+                        score: 0,
+                        maxScore: 15,
+                        explanation: '',
+                        shortExplanation: '',
+                    },
+                },
+                sustainabilityTips: [],
+            };
+        }
 
-    // Prepare prompt for Gemini
-    const prompt = `
+        // Prepare prompt for Gemini
+        const prompt = `
       Evaluate the sustainability of this product based on the following comprehensive details:
       
       Product Information:
@@ -347,306 +387,375 @@ export async function calculateSustainabilityScore(productData: SustainableProdu
       Sources Used: [List all sources with URLs used to inform this assessment]
     `;
 
-    console.log('Gemini Prompt:', prompt);
+        console.log('Gemini Prompt:', prompt);
 
-    // Call Gemini API with enhanced error handling and timeout
-    let result;
-    try {
-      console.log('Calling Gemini API with Google Search retrieval...');
-      
-      // Configure the request
-      const generationConfig = {
-        maxOutputTokens: 1000,
-        temperature: 0.2,
-      };
-      
-      // Configure safety settings
-      const safetySettings = [
-        {
-          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.BLOCK_NONE
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold: HarmBlockThreshold.BLOCK_NONE
-        }
-      ] as SafetySetting[];
-      
-      // Make the API call with standard parameters
-      result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig,
-        safetySettings
-      });
-
-      // Clear timeout since we got a response
-      clearTimeout(timeoutId);
-      
-      // Log grounding metadata if available
-      // Use type assertion to access groundingMetadata which might not be in the type definitions
-      const candidates = (result.response as any).candidates;
-      if (candidates?.[0]) {
+        // Call Gemini API with enhanced error handling and timeout
+        let result;
         try {
-          // Improved metadata extraction with better null handling
-          const groundingMetadata = candidates[0]?.groundingMetadata || {};
-          const retrievalMetadata = groundingMetadata?.retrievalMetadata || {};
-          const dynamicScore = retrievalMetadata?.googleSearchDynamicRetrievalScore;
-          
-          if (dynamicScore !== undefined) {
-            console.log(`Response was grounded with Google Search (score: ${dynamicScore})`);
-            
-            // Check if the score is above the threshold
-            if (dynamicScore >= GEMINI_SEARCH_THRESHOLD) {
-              console.log(`Dynamic retrieval score (${dynamicScore}) is above threshold (${GEMINI_SEARCH_THRESHOLD}), search was used`);
+            console.log('Calling Gemini API with Google Search retrieval...');
+
+            // Configure the request
+            const generationConfig = {
+                maxOutputTokens: 1000,
+                temperature: 0.2,
+            };
+
+            // Configure safety settings
+            const safetySettings = [
+                {
+                    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    threshold: HarmBlockThreshold.BLOCK_NONE,
+                },
+                {
+                    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold: HarmBlockThreshold.BLOCK_NONE,
+                },
+            ] as SafetySetting[];
+
+            // Make the API call with standard parameters
+            result = await model.generateContent({
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                generationConfig,
+                safetySettings,
+            });
+
+            // Clear timeout since we got a response
+            clearTimeout(timeoutId);
+
+            // Log grounding metadata if available
+            // Use type assertion to access groundingMetadata which might not be in the type definitions
+            const candidates = (result.response as any).candidates;
+            if (candidates?.[0]) {
+                try {
+                    // Improved metadata extraction with better null handling
+                    const groundingMetadata = candidates[0]?.groundingMetadata || {};
+                    const retrievalMetadata = groundingMetadata?.retrievalMetadata || {};
+                    const dynamicScore = retrievalMetadata?.googleSearchDynamicRetrievalScore;
+
+                    if (dynamicScore !== undefined) {
+                        console.log(
+                            `Response was grounded with Google Search (score: ${dynamicScore})`
+                        );
+
+                        // Check if the score is above the threshold
+                        if (dynamicScore >= GEMINI_SEARCH_THRESHOLD) {
+                            console.log(
+                                `Dynamic retrieval score (${dynamicScore}) is above threshold (${GEMINI_SEARCH_THRESHOLD}), search was used`
+                            );
+                        } else {
+                            console.log(
+                                `Dynamic retrieval score (${dynamicScore}) is below threshold (${GEMINI_SEARCH_THRESHOLD}), but search was still used`
+                            );
+                        }
+                    } else {
+                        console.log(
+                            'Response was grounded with Google Search (no score available)'
+                        );
+                    }
+
+                    // Check for specific web search queries with improved null handling
+                    const webSearchQueries = groundingMetadata?.webSearchQueries || [];
+                    if (Array.isArray(webSearchQueries) && webSearchQueries.length > 0) {
+                        console.log('Search queries used:', webSearchQueries);
+                    } else {
+                        console.log(
+                            'Search queries used: No specific queries found in response metadata'
+                        );
+                    }
+
+                    // Check for grounding chunks/sources with improved null handling
+                    const groundingChunks = groundingMetadata?.groundingChunks || [];
+                    console.log(
+                        `Number of grounding sources in metadata: ${Array.isArray(groundingChunks) ? groundingChunks.length : 0}`
+                    );
+
+                    // Log the full metadata for reference
+                    console.log(
+                        'Full grounding metadata structure:',
+                        JSON.stringify(groundingMetadata, null, 2)
+                    );
+
+                    // Log a more user-friendly interpretation
+                    console.log(
+                        'Interpretation: The model used web search to enhance its response, but specific search queries and sources may not be included in the API metadata'
+                    );
+                } catch (error) {
+                    console.log('Error accessing grounding metadata details:', error);
+                    console.log(
+                        'Raw grounding metadata:',
+                        JSON.stringify(candidates[0]?.groundingMetadata || {}, null, 2)
+                    );
+                }
             } else {
-              console.log(`Dynamic retrieval score (${dynamicScore}) is below threshold (${GEMINI_SEARCH_THRESHOLD}), but search was still used`);
+                console.log(
+                    'Response was generated without Google Search grounding or no candidates returned'
+                );
             }
-          } else {
-            console.log('Response was grounded with Google Search (no score available)');
-          }
-          
-          // Check for specific web search queries with improved null handling
-          const webSearchQueries = groundingMetadata?.webSearchQueries || [];
-          if (Array.isArray(webSearchQueries) && webSearchQueries.length > 0) {
-            console.log('Search queries used:', webSearchQueries);
-          } else {
-            console.log('Search queries used: No specific queries found in response metadata');
-          }
-          
-          // Check for grounding chunks/sources with improved null handling
-          const groundingChunks = groundingMetadata?.groundingChunks || [];
-          console.log(`Number of grounding sources in metadata: ${Array.isArray(groundingChunks) ? groundingChunks.length : 0}`);
-          
-          // Log the full metadata for reference
-          console.log('Full grounding metadata structure:', JSON.stringify(groundingMetadata, null, 2));
-          
-          // Log a more user-friendly interpretation
-          console.log('Interpretation: The model used web search to enhance its response, but specific search queries and sources may not be included in the API metadata');
-        } catch (error) {
-          console.log('Error accessing grounding metadata details:', error);
-          console.log('Raw grounding metadata:', JSON.stringify(candidates[0]?.groundingMetadata || {}, null, 2));
-        }
-      } else {
-        console.log('Response was generated without Google Search grounding or no candidates returned');
-      }
-      
-      // Parse the response
-      const responseText = result.response.text();
-      console.log('Gemini Response:', responseText);
-      
-      // Try to extract search information from the response
-      try {
-        // Extract search queries and sources from the response
-        const searchInfoMatch = responseText.match(/\*\*Search Information\*\*([\s\S]*?)(?=\*\*|$)/i);
-        if (searchInfoMatch && searchInfoMatch[1]) {
-          const searchInfoText = searchInfoMatch[1].trim();
-          console.log('Search Information found in response:', searchInfoText);
-          
-          // Extract queries
-          const queriesMatch = searchInfoText.match(/Queries Used:([\s\S]*?)(?=Sources Used:|$)/i);
-          if (queriesMatch && queriesMatch[1]) {
-            console.log('Search Queries from response:', queriesMatch[1].trim());
-          }
-          
-          // Extract sources
-          const sourcesMatch = searchInfoText.match(/Sources Used:([\s\S]*?)$/i);
-          if (sourcesMatch && sourcesMatch[1]) {
-            console.log('Search Sources from response:', sourcesMatch[1].trim());
-          }
-        } else {
-          console.log('No Search Information section found in the response');
-        }
-        
-        // Enhanced citation detection with multiple formats
-        const citationRegexes = [
-          /\[Source: (https?:\/\/[^\]]+)\]/g,  // [Source: URL]
-          /\[(https?:\/\/[^\]]+)\]/g,          // [URL]
-          /Source: (https?:\/\/[^\s]+)/g       // Source: URL
-        ];
-        
-        const citations = new Set<string>();
-        for (const regex of citationRegexes) {
-          let match;
-          while ((match = regex.exec(responseText)) !== null) {
-            citations.add(match[1]);
-          }
-        }
-        
-        if (citations.size > 0) {
-          console.log('Citations found in response:', Array.from(citations));
-        } else {
-          console.log('No citations found in response');
-        }
-      } catch (error) {
-        console.log('Error extracting search information from response:', error);
-      }
-      
-      // Initialize category scores and reasoning
-      const categories = {
-        materials: { maxScore: 35, score: 0, explanation: '', shortExplanation: '' },
-        manufacturing: { maxScore: 25, score: 0, explanation: '', shortExplanation: '' },
-        lifecycle: { maxScore: 25, score: 0, explanation: '', shortExplanation: '' },
-        certifications: { maxScore: 15, score: 0, explanation: '', shortExplanation: '' }
-      };
 
-      // Initialize sustainability tips array
-      const sustainabilityTips: SustainabilityTip[] = [];
+            // Parse the response
+            const responseText = result.response.text();
+            console.log('Gemini Response:', responseText);
 
-      // Extract scores and reasoning for each aspect
-      const aspects = responseText.split('---').filter(Boolean);
-      aspects.forEach(aspect => {
-        const aspectName = aspect.match(/\*\*Aspect: ([^*]+)\*\*/i)?.[1]?.toLowerCase().trim();
-        const scoreMatch = aspect.match(/Score:\s*\[?(\d+)\/(\d+)\]?/);
-        const reasoningMatch = aspect.match(/Reasoning:\s*([\s\S]*?)Short Reasoning:/);
-        const shortReasoningMatch = aspect.match(/Short Reasoning:\s*([^\n]+)/);
+            // Try to extract search information from the response
+            try {
+                // Extract search queries and sources from the response
+                const searchInfoMatch = responseText.match(
+                    /\*\*Search Information\*\*([\s\S]*?)(?=\*\*|$)/i
+                );
+                if (searchInfoMatch && searchInfoMatch[1]) {
+                    const searchInfoText = searchInfoMatch[1].trim();
+                    console.log('Search Information found in response:', searchInfoText);
 
-        if (aspectName && scoreMatch && reasoningMatch) {
-          const categoryKey = aspectName.toLowerCase().replace(/[^a-z]/g, '') as keyof typeof categories;
-          if (categories[categoryKey]) {
-            categories[categoryKey].score = parseInt(scoreMatch[1], 10);
-            
-            // Extract the full reasoning text
-            let fullExplanation = reasoningMatch[1].trim();
-            
-            // Check if there's an UNCERTAIN section and include it in the explanation
-            // but make it clear that these factors were not counted against the score
-            const uncertainMatch = fullExplanation.match(/UNCERTAIN:([\s\S]*?)(?=POSITIVES:|NEGATIVES:|$)/i);
-            if (uncertainMatch && uncertainMatch[1].trim()) {
-              // Add a note that these factors were not counted against the score
-              fullExplanation += "\n\nNote: The uncertain factors listed above were not counted against the score.";
+                    // Extract queries
+                    const queriesMatch = searchInfoText.match(
+                        /Queries Used:([\s\S]*?)(?=Sources Used:|$)/i
+                    );
+                    if (queriesMatch && queriesMatch[1]) {
+                        console.log('Search Queries from response:', queriesMatch[1].trim());
+                    }
+
+                    // Extract sources
+                    const sourcesMatch = searchInfoText.match(/Sources Used:([\s\S]*?)$/i);
+                    if (sourcesMatch && sourcesMatch[1]) {
+                        console.log('Search Sources from response:', sourcesMatch[1].trim());
+                    }
+                } else {
+                    console.log('No Search Information section found in the response');
+                }
+
+                // Enhanced citation detection with multiple formats
+                const citationRegexes = [
+                    /\[Source: (https?:\/\/[^\]]+)\]/g, // [Source: URL]
+                    /\[(https?:\/\/[^\]]+)\]/g, // [URL]
+                    /Source: (https?:\/\/[^\s]+)/g, // Source: URL
+                ];
+
+                const citations = new Set<string>();
+                for (const regex of citationRegexes) {
+                    let match;
+                    while ((match = regex.exec(responseText)) !== null) {
+                        citations.add(match[1]);
+                    }
+                }
+
+                if (citations.size > 0) {
+                    console.log('Citations found in response:', Array.from(citations));
+                } else {
+                    console.log('No citations found in response');
+                }
+            } catch (error) {
+                console.log('Error extracting search information from response:', error);
             }
-            
-            categories[categoryKey].explanation = fullExplanation;
-            categories[categoryKey].shortExplanation = shortReasoningMatch ? shortReasoningMatch[1].trim() : 'Score based on product analysis.';
-          }
+
+            // Initialize category scores and reasoning
+            const categories = {
+                materials: { maxScore: 35, score: 0, explanation: '', shortExplanation: '' },
+                manufacturing: { maxScore: 25, score: 0, explanation: '', shortExplanation: '' },
+                lifecycle: { maxScore: 25, score: 0, explanation: '', shortExplanation: '' },
+                certifications: { maxScore: 15, score: 0, explanation: '', shortExplanation: '' },
+            };
+
+            // Initialize sustainability tips array
+            const sustainabilityTips: SustainabilityTip[] = [];
+
+            // Extract scores and reasoning for each aspect
+            const aspects = responseText.split('---').filter(Boolean);
+            aspects.forEach((aspect) => {
+                const aspectName = aspect
+                    .match(/\*\*Aspect: ([^*]+)\*\*/i)?.[1]
+                    ?.toLowerCase()
+                    .trim();
+                const scoreMatch = aspect.match(/Score:\s*\[?(\d+)\/(\d+)\]?/);
+                const reasoningMatch = aspect.match(/Reasoning:\s*([\s\S]*?)Short Reasoning:/);
+                const shortReasoningMatch = aspect.match(/Short Reasoning:\s*([^\n]+)/);
+
+                if (aspectName && scoreMatch && reasoningMatch) {
+                    const categoryKey = aspectName
+                        .toLowerCase()
+                        .replace(/[^a-z]/g, '') as keyof typeof categories;
+                    if (categories[categoryKey]) {
+                        categories[categoryKey].score = parseInt(scoreMatch[1], 10);
+
+                        // Extract the full reasoning text
+                        let fullExplanation = reasoningMatch[1].trim();
+
+                        // Check if there's an UNCERTAIN section and include it in the explanation
+                        // but make it clear that these factors were not counted against the score
+                        const uncertainMatch = fullExplanation.match(
+                            /UNCERTAIN:([\s\S]*?)(?=POSITIVES:|NEGATIVES:|$)/i
+                        );
+                        if (uncertainMatch && uncertainMatch[1].trim()) {
+                            // Add a note that these factors were not counted against the score
+                            fullExplanation +=
+                                '\n\nNote: The uncertain factors listed above were not counted against the score.';
+                        }
+
+                        categories[categoryKey].explanation = fullExplanation;
+                        categories[categoryKey].shortExplanation = shortReasoningMatch
+                            ? shortReasoningMatch[1].trim()
+                            : 'Score based on product analysis.';
+                    }
+                }
+
+                // Extract sustainability tips
+                if (aspect.includes('**Sustainability Tips**')) {
+                    // Extract usage tips
+                    const usageMatches = aspect.matchAll(/USAGE:\s*([^\n]+)/g);
+                    for (const match of usageMatches) {
+                        if (match[1]) {
+                            sustainabilityTips.push({
+                                tip: match[1].trim(),
+                                category: 'usage',
+                            });
+                        }
+                    }
+
+                    // Extract maintenance tips
+                    const maintenanceMatches = aspect.matchAll(/MAINTENANCE:\s*([^\n]+)/g);
+                    for (const match of maintenanceMatches) {
+                        if (match[1]) {
+                            sustainabilityTips.push({
+                                tip: match[1].trim(),
+                                category: 'maintenance',
+                            });
+                        }
+                    }
+
+                    // Extract disposal tips
+                    const disposalMatches = aspect.matchAll(/DISPOSAL:\s*([^\n]+)/g);
+                    for (const match of disposalMatches) {
+                        if (match[1]) {
+                            sustainabilityTips.push({
+                                tip: match[1].trim(),
+                                category: 'disposal',
+                            });
+                        }
+                    }
+
+                    // Extract general tips
+                    const generalMatches = aspect.matchAll(/GENERAL:\s*([^\n]+)/g);
+                    for (const match of generalMatches) {
+                        if (match[1]) {
+                            sustainabilityTips.push({
+                                tip: match[1].trim(),
+                                category: 'general',
+                            });
+                        }
+                    }
+
+                    // If no tips were found, add default tips based on product category
+                    if (sustainabilityTips.length === 0) {
+                        sustainabilityTips.push(
+                            {
+                                tip: 'Use this product as intended to maximize its lifespan and efficiency.',
+                                category: 'usage',
+                            },
+                            {
+                                tip: "Follow the manufacturer's maintenance guidelines to extend the product's life.",
+                                category: 'maintenance',
+                            },
+                            {
+                                tip: 'Check local recycling guidelines for proper disposal of this product.',
+                                category: 'disposal',
+                            },
+                            {
+                                tip: 'Consider the environmental impact when purchasing similar products in the future.',
+                                category: 'general',
+                            }
+                        );
+                    }
+                }
+            });
+
+            // Calculate total score
+            const totalScore = Object.values(categories).reduce((sum, cat) => sum + cat.score, 0);
+
+            return {
+                score: totalScore,
+                aspects: {
+                    materials: {
+                        score: categories.materials.score,
+                        maxScore: categories.materials.maxScore,
+                        explanation: categories.materials.explanation,
+                        shortExplanation: categories.materials.shortExplanation,
+                    },
+                    manufacturing: {
+                        score: categories.manufacturing.score,
+                        maxScore: categories.manufacturing.maxScore,
+                        explanation: categories.manufacturing.explanation,
+                        shortExplanation: categories.manufacturing.shortExplanation,
+                    },
+                    lifecycle: {
+                        score: categories.lifecycle.score,
+                        maxScore: categories.lifecycle.maxScore,
+                        explanation: categories.lifecycle.explanation,
+                        shortExplanation: categories.lifecycle.shortExplanation,
+                    },
+                    certifications: {
+                        score: categories.certifications.score,
+                        maxScore: categories.certifications.maxScore,
+                        explanation: categories.certifications.explanation,
+                        shortExplanation: categories.certifications.shortExplanation,
+                    },
+                },
+                sustainabilityTips,
+            };
+        } catch (apiError: any) {
+            // Clear the timeout to prevent memory leaks
+            clearTimeout(timeoutId);
+
+            // Comprehensive error logging
+            console.error('Gemini API Error Details:', {
+                errorName: apiError.name,
+                errorMessage: apiError.message,
+                errorCode: apiError.code,
+                errorStatus: apiError.status,
+                isTimeout: apiError.name === 'AbortError' || apiError.message.includes('timeout'),
+                fullError: JSON.stringify(apiError, Object.getOwnPropertyNames(apiError)),
+            });
+
+            // Fallback scoring
+            const baseScore = 50;
+
+            return {
+                score: baseScore,
+                aspects: {
+                    materials: { score: 0, maxScore: 35, explanation: '', shortExplanation: '' },
+                    manufacturing: {
+                        score: 0,
+                        maxScore: 25,
+                        explanation: '',
+                        shortExplanation: '',
+                    },
+                    lifecycle: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
+                    certifications: {
+                        score: 0,
+                        maxScore: 15,
+                        explanation: '',
+                        shortExplanation: '',
+                    },
+                },
+                sustainabilityTips: [
+                    {
+                        tip: 'Use this product as intended to maximize its lifespan and efficiency.',
+                        category: 'usage',
+                    },
+                    {
+                        tip: "Follow the manufacturer's maintenance guidelines to extend the product's life.",
+                        category: 'maintenance',
+                    },
+                    {
+                        tip: 'Check local recycling guidelines for proper disposal of this product.',
+                        category: 'disposal',
+                    },
+                    {
+                        tip: 'Consider the environmental impact when purchasing similar products in the future.',
+                        category: 'general',
+                    },
+                ],
+            };
         }
-        
-        // Extract sustainability tips
-        if (aspect.includes('**Sustainability Tips**')) {
-          // Extract usage tips
-          const usageMatches = aspect.matchAll(/USAGE:\s*([^\n]+)/g);
-          for (const match of usageMatches) {
-            if (match[1]) {
-              sustainabilityTips.push({
-                tip: match[1].trim(),
-                category: 'usage'
-              });
-            }
-          }
-          
-          // Extract maintenance tips
-          const maintenanceMatches = aspect.matchAll(/MAINTENANCE:\s*([^\n]+)/g);
-          for (const match of maintenanceMatches) {
-            if (match[1]) {
-              sustainabilityTips.push({
-                tip: match[1].trim(),
-                category: 'maintenance'
-              });
-            }
-          }
-          
-          // Extract disposal tips
-          const disposalMatches = aspect.matchAll(/DISPOSAL:\s*([^\n]+)/g);
-          for (const match of disposalMatches) {
-            if (match[1]) {
-              sustainabilityTips.push({
-                tip: match[1].trim(),
-                category: 'disposal'
-              });
-            }
-          }
-          
-          // Extract general tips
-          const generalMatches = aspect.matchAll(/GENERAL:\s*([^\n]+)/g);
-          for (const match of generalMatches) {
-            if (match[1]) {
-              sustainabilityTips.push({
-                tip: match[1].trim(),
-                category: 'general'
-              });
-            }
-          }
-          
-          // If no tips were found, add default tips based on product category
-          if (sustainabilityTips.length === 0) {
-            sustainabilityTips.push(
-              { tip: "Use this product as intended to maximize its lifespan and efficiency.", category: 'usage' },
-              { tip: "Follow the manufacturer's maintenance guidelines to extend the product's life.", category: 'maintenance' },
-              { tip: "Check local recycling guidelines for proper disposal of this product.", category: 'disposal' },
-              { tip: "Consider the environmental impact when purchasing similar products in the future.", category: 'general' }
-            );
-          }
-        }
-      });
-
-      // Calculate total score
-      const totalScore = Object.values(categories).reduce((sum, cat) => sum + cat.score, 0);
-
-      return {
-        score: totalScore,
-        aspects: {
-          materials: { 
-            score: categories.materials.score,
-            maxScore: categories.materials.maxScore,
-            explanation: categories.materials.explanation,
-            shortExplanation: categories.materials.shortExplanation
-          },
-          manufacturing: {
-            score: categories.manufacturing.score,
-            maxScore: categories.manufacturing.maxScore,
-            explanation: categories.manufacturing.explanation,
-            shortExplanation: categories.manufacturing.shortExplanation
-          },
-          lifecycle: {
-            score: categories.lifecycle.score,
-            maxScore: categories.lifecycle.maxScore,
-            explanation: categories.lifecycle.explanation,
-            shortExplanation: categories.lifecycle.shortExplanation
-          },
-          certifications: {
-            score: categories.certifications.score,
-            maxScore: categories.certifications.maxScore,
-            explanation: categories.certifications.explanation,
-            shortExplanation: categories.certifications.shortExplanation
-          }
-        },
-        sustainabilityTips
-      };
-
-    } catch (apiError: any) {
-      // Clear the timeout to prevent memory leaks
-      clearTimeout(timeoutId);
-
-      // Comprehensive error logging
-      console.error('Gemini API Error Details:', {
-        errorName: apiError.name,
-        errorMessage: apiError.message,
-        errorCode: apiError.code,
-        errorStatus: apiError.status,
-        isTimeout: apiError.name === 'AbortError' || apiError.message.includes('timeout'),
-        fullError: JSON.stringify(apiError, Object.getOwnPropertyNames(apiError))
-      });
-
-      // Fallback scoring
-      const baseScore = 50;
-
-      return {
-        score: baseScore,
-        aspects: {
-          materials: { score: 0, maxScore: 35, explanation: '', shortExplanation: '' },
-          manufacturing: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
-          lifecycle: { score: 0, maxScore: 25, explanation: '', shortExplanation: '' },
-          certifications: { score: 0, maxScore: 15, explanation: '', shortExplanation: '' }
-        },
-        sustainabilityTips: [
-          { tip: "Use this product as intended to maximize its lifespan and efficiency.", category: 'usage' },
-          { tip: "Follow the manufacturer's maintenance guidelines to extend the product's life.", category: 'maintenance' },
-          { tip: "Check local recycling guidelines for proper disposal of this product.", category: 'disposal' },
-          { tip: "Consider the environmental impact when purchasing similar products in the future.", category: 'general' }
-        ]
-      };
+    } finally {
+        clearTimeout(timeoutId);
     }
-  } finally {
-    clearTimeout(timeoutId);
-  }
 }

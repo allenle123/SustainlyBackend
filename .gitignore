@@ -29,6 +29,9 @@ yarn-error.log*
 .vscode/
 .idea/
 
+# Biome
+.biome/
+
 # Misc
 .DS_Store
 Thumbs.db

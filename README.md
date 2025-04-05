@@ -94,5 +94,58 @@ To enable web search functionality:
 
 Note: Web search functionality incurs additional costs beyond the standard Gemini API usage.
 
+## Code Quality with Biome
+
+This project uses [Biome](https://biomejs.dev/) for linting, formatting, and code quality checks. Biome is a fast, modern JavaScript/TypeScript toolchain that replaces ESLint, Prettier, and other tools with a single, unified solution.
+
+### Biome Configuration
+
+The project's Biome configuration is defined in `biome.json` with the following key features:
+
+- **Linting**: Enabled with recommended rules and some customizations:
+  - Disabled rules: `noUnusedVariables`, `useConst`, `noNegationElse`, `noExplicitAny`
+  - Ignored directories: `dist`, `node_modules`, `cdk.out`, `build`
+
+- **Formatting**: Configured with:
+  - Space indentation (4 spaces)
+  - 100 character line width
+  - Single quotes for JavaScript
+  - Always use semicolons
+  - ES5 trailing commas
+
+- **Import Organization**: Automatically organizes imports
+
+### Available Commands
+
+The following npm scripts are available for code quality management:
+
+```bash
+# Lint your code
+pnpm run lint
+
+# Lint and automatically fix issues
+pnpm run lint:fix
+
+# Format your code
+pnpm run format
+
+# Format and write changes
+pnpm run format:fix
+
+# Run all checks (linting and formatting)
+pnpm run check
+
+# Run all checks and fix issues
+pnpm run check:fix
+```
+
+### Development Workflow
+
+For the best development experience:
+
+1. Run `npm run check:fix` before committing changes to ensure code quality
+2. Configure your IDE to use Biome (many editors have Biome extensions available)
+3. The `.biome/` directory is gitignored to prevent committing cache files
+
 ## Contributing
 Please read CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests.

@@ -1,3 +1,3 @@
 {
-  "app": "npx ts-node cdk/bin/cdk.ts"
+    "app": "npx ts-node cdk/bin/cdk.ts"
 }
