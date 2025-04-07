@@ -218,7 +218,8 @@ export async function calculateSustainabilityScore(
 
       **Aspect: Certifications** (15 points max)
       Scoring Ranges:
-      - 0-3 points: No certifications
+      - 0 points ONLY: No certifications found
+        * IMPORTANT: If no certifications are found, you MUST score this as 0 points, not 1-3 points
         * No eco-certifications (no third-party verification)
         * No verified claims (self-declared "green" claims only)
         * No standards compliance (below minimum industry standards)
@@ -584,11 +585,7 @@ export async function calculateSustainabilityScore(
                         const uncertainMatch = fullExplanation.match(
                             /UNCERTAIN:([\s\S]*?)(?=POSITIVES:|NEGATIVES:|$)/i
                         );
-                        if (uncertainMatch && uncertainMatch[1].trim()) {
-                            // Add a note that these factors were not counted against the score
-                            fullExplanation +=
-                                '\n\nNote: The uncertain factors listed above were not counted against the score.';
-                        }
+                        // No additional note is added about uncertain factors
 
                         categories[categoryKey].explanation = fullExplanation;
                         categories[categoryKey].shortExplanation = shortReasoningMatch
