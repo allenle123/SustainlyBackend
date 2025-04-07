@@ -48,6 +48,28 @@ The `full-deploy` script combines pre-deployment tasks (cleaning and bundling) w
 ## Environment Variables
 - `DYNAMODB_TABLE`: Name of the DynamoDB table for product data
 - `GEMINI_API_KEY`: API key for Google's Gemini AI (required for web search)
+- `API_KEYS`: Comma-separated list of valid API keys for API authentication
+
+## API Authentication
+
+The API is now private and requires an API key for access. All endpoints are protected and require the API key to be included in the request headers.
+
+### Using the API Key
+
+To access the API endpoints, include the API key in the `x-api-key` header of your requests:
+
+```
+Headers:
+  x-api-key: YOUR_API_KEY
+```
+
+### Obtaining an API Key
+
+After deploying the application, you can obtain the API key ID from the CloudFormation outputs. The actual API key value can be retrieved from the AWS Console or using the AWS CLI:
+
+```bash
+aws apigateway get-api-key --api-key YOUR_API_KEY_ID --include-value
+```
 - `PROJECT_ID`: Google Cloud Project ID
 - `SUPABASE_URL`: URL for your Supabase project
 - `SUPABASE_SERVICE_KEY`: Service key for Supabase authentication

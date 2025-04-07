@@ -10,6 +10,18 @@ import { getProductScore } from './features/product-score/product-score-handler'
 // import { getAlternativeProducts } from './features/alternative-products/alternative-products-handler';
 import { getUserHistory, clearUserHistory } from './features/user-history/user-history-handler';
 
+// API key validation - in production, use a more secure method like environment variables or AWS Secrets Manager
+const VALID_API_KEYS = process.env.API_KEYS ? process.env.API_KEYS.split(',') : [];
+
+// Function to validate API key
+const validateApiKey = (apiKey: string | undefined): boolean => {
+    if (!apiKey) return false;
+
+    // In production, you should use a more secure method to validate API keys
+    // For example, checking against keys stored in AWS Secrets Manager or DynamoDB
+    return VALID_API_KEYS.includes(apiKey);
+};
+
 // Define CORS headers
 const corsHeaders = {
     'Access-Control-Allow-Origin': 'http://localhost:8081',
@@ -31,6 +43,17 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
                 statusCode: 400,
                 headers: corsHeaders,
                 body: JSON.stringify({ message: 'Invalid request: No event data' }),
+            };
+        }
+
+        // Validate API key for non-OPTIONS requests
+        const apiKey = event.headers?.['x-api-key'] || event.headers?.['X-Api-Key'];
+        if (event.httpMethod !== 'OPTIONS' && !validateApiKey(apiKey)) {
+            console.warn('Invalid or missing API key');
+            return {
+                statusCode: 403,
+                headers: corsHeaders,
+                body: JSON.stringify({ message: 'Forbidden: Invalid or missing API key' }),
             };
         }
 
