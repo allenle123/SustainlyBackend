@@ -8,7 +8,7 @@ import { getUserIdFromToken, saveToUserHistory } from '../../utils/supabase-clie
 const corsHeaders = {
     'Access-Control-Allow-Origin': 'http://localhost:8081',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, x-api-key, Authorization',
     'Access-Control-Allow-Credentials': 'true',
 };
 

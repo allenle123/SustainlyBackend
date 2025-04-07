@@ -26,7 +26,7 @@ const validateApiKey = (apiKey: string | undefined): boolean => {
 const corsHeaders = {
     'Access-Control-Allow-Origin': 'http://localhost:8081',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, X-Api-Key',
     'Access-Control-Allow-Credentials': 'true',
     'Content-Type': 'application/json',
 };
@@ -47,8 +47,19 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         }
 
         // Validate API key for non-OPTIONS requests
+        // Skip validation if the request comes from API Gateway (it already validated the key)
         const apiKey = event.headers?.['x-api-key'] || event.headers?.['X-Api-Key'];
-        if (event.httpMethod !== 'OPTIONS' && !validateApiKey(apiKey)) {
+        const isFromApiGateway = !!event.requestContext?.apiId;
+        
+        // Enhanced logging for API key validation
+        console.log('API Key Validation:', {
+            receivedApiKey: apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'none',
+            isFromApiGateway,
+            validationRequired: !isFromApiGateway,
+            validationResult: isFromApiGateway ? 'skipped' : validateApiKey(apiKey)
+        });
+        
+        if (event.httpMethod !== 'OPTIONS' && !isFromApiGateway && !validateApiKey(apiKey)) {
             console.warn('Invalid or missing API key');
             return {
                 statusCode: 403,
