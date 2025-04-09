@@ -1,4 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { getTimings, clearTimings } from '../../utils/timing';
 import { validateAmazonUrl } from './url-validator';
 import { fetchProductData } from './product-data-fetcher';
 import { calculateSustainabilityScore, SustainabilityTip } from './sustainability-calculator';
@@ -15,6 +16,8 @@ const corsHeaders = {
 export const getProductScore = async (
     event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+    // Clear any previous timings
+    clearTimings();
     try {
         const url = event.queryStringParameters?.url;
 
@@ -114,6 +117,26 @@ export const getProductScore = async (
                 console.log('No user ID found, skipping history save');
             }
 
+            // Get all timing metrics and log them to console
+            const timingMetrics = getTimings();
+            
+            // Log detailed timing metrics
+            console.log('===== API TIMING METRICS =====');
+            console.log(JSON.stringify(timingMetrics, null, 2));
+            
+            // Calculate and log total API processing time
+            const totalTime = timingMetrics.reduce((sum, metric) => sum + metric.durationMs, 0);
+            console.log(`Total API processing time: ${totalTime.toFixed(2)}ms`);
+            
+            // Log summary of each operation
+            console.log('Timing Summary:');
+            const operationSummary: Record<string, string> = {};
+            timingMetrics.forEach(metric => {
+                operationSummary[metric.operation] = metric.durationMs.toFixed(2) + 'ms';
+            });
+            console.log(operationSummary);
+            console.log('==============================');
+            
             return {
                 statusCode: 200,
                 headers: corsHeaders,

@@ -4,6 +4,7 @@ import {
     SafetySetting,
     HarmBlockThreshold,
 } from '@google/generative-ai';
+import { timeOperation } from '../../utils/timing';
 import { SustainableProductData } from './product-data-fetcher';
 
 // Use environment variables for API key and configuration
@@ -413,11 +414,13 @@ export async function calculateSustainabilityScore(
                 },
             ] as SafetySetting[];
 
-            // Make the API call with standard parameters
-            result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                generationConfig,
-                safetySettings,
+            // Make the API call with standard parameters and measure timing
+            result = await timeOperation('Gemini API Call', async () => {
+                return await model.generateContent({
+                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                    generationConfig,
+                    safetySettings,
+                });
             });
 
             // Clear timeout since we got a response

@@ -1,4 +1,5 @@
 import { MOCK_RESPONSE } from './mock-data';
+import { timeOperation } from '../../utils/timing';
 
 // Use environment variable for API key
 const CANOPY_API_KEY = process.env.CANOPY_API_KEY;
@@ -110,7 +111,10 @@ async function canopyApiCall(url: string) {
 
 export async function fetchProductData(url: string): Promise<SustainableProductData> {
     try {
-        const product = await canopyApiCall(url);
+        // Use the timing utility to measure Canopy API call duration
+        const product = await timeOperation('Canopy API Call', async () => {
+            return await canopyApiCall(url);
+        });
 
         const productData: SustainableProductData = {
             productId: product.asin || '',
