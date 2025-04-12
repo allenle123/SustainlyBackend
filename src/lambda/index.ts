@@ -10,26 +10,8 @@ import { getProductScore } from './features/product-score/product-score-handler'
 // import { getAlternativeProducts } from './features/alternative-products/alternative-products-handler';
 import { getUserHistory, clearUserHistory } from './features/user-history/user-history-handler';
 
-// API key validation - in production, use a more secure method like environment variables or AWS Secrets Manager
-const VALID_API_KEYS = process.env.API_KEYS ? process.env.API_KEYS.split(',') : [];
-
-// Function to validate API key
-const validateApiKey = (apiKey: string | undefined): boolean => {
-    if (!apiKey) return false;
-
-    // In production, you should use a more secure method to validate API keys
-    // For example, checking against keys stored in AWS Secrets Manager or DynamoDB
-    return VALID_API_KEYS.includes(apiKey);
-};
-
-// Define CORS headers
-const corsHeaders = {
-    'Access-Control-Allow-Origin': 'http://localhost:8081',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, X-Api-Key',
-    'Access-Control-Allow-Credentials': 'true',
-    'Content-Type': 'application/json',
-};
+// Import shared CORS headers
+import { corsHeaders } from './utils/cors-headers';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
