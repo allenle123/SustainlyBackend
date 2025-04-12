@@ -5,12 +5,7 @@ import { calculateSustainabilityScore, SustainabilityTip } from './sustainabilit
 import { getCachedProduct, cacheProductData } from './product-cache';
 import { getUserIdFromToken, saveToUserHistory } from '../../utils/supabase-client';
 
-const corsHeaders = {
-    'Access-Control-Allow-Origin': 'http://localhost:8081',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-};
+import { corsHeaders } from '../../utils/cors-headers';
 
 export const getProductScore = async (
     event: APIGatewayProxyEvent
