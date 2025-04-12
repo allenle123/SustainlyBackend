@@ -2,12 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { getUserIdFromToken, supabase } from '../../utils/supabase-client';
 import { getCachedProduct } from '../product-score/product-cache';
 
-const corsHeaders = {
-    'Access-Control-Allow-Origin': 'http://localhost:8081',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-};
+import { corsHeaders } from '../../utils/cors-headers';
 
 /**
  * Retrieves a user's history with product details from DynamoDB
