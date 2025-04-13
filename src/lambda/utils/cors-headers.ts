@@ -1,7 +1,7 @@
 // Helper function to determine the correct origin for CORS
 export const getCorsHeaders = (requestOrigin?: string) => {
-    // List of allowed origins
-    const allowedOrigins = ['https://sustainly-six.vercel.app/', 'http://localhost:8081/'];
+    // List of allowed origins (without trailing slashes to match browser behavior)
+    const allowedOrigins = ['https://sustainly-six.vercel.app', 'http://localhost:8081'];
     
     // Default origin (first in the list) if request origin is not in allowed list
     let origin = allowedOrigins[0];

@@ -267,6 +267,7 @@ export async function calculateSustainabilityScore(
       - DO NOT include the source of information (e.g., "According to the product description..." or "Based on the feature bullets...")
       - Present all information as direct statements without referencing where it came from
       - IMPORTANT: If the score for any aspect is not a perfect score (not maximum points), you MUST include at least one or two negative factors and/or uncertain factors for that aspect
+      - CRITICAL: If the score for any aspect is greater than 0, you MUST include at least one positive factor for that aspect
 
       Output format must follow this exact structure:
 

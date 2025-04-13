@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { getUserIdFromToken, supabase } from '../../utils/supabase-client';
 import { getCachedProduct } from '../product-score/product-cache';
 
-import { corsHeaders } from '../../utils/cors-headers';
+import { getCorsHeaders } from '../../utils/cors-headers';
 
 /**
  * Retrieves a user's history with product details from DynamoDB
@@ -11,6 +11,9 @@ export const getUserHistory = async (
     event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
     try {
+        // Get the request origin from the headers
+        const requestOrigin = event.headers?.origin || event.headers?.Origin;
+        
         // Extract user ID from authorization header
         const authHeader = event.headers?.Authorization || event.headers?.authorization;
         console.log('Auth header:', authHeader);
@@ -21,7 +24,7 @@ export const getUserHistory = async (
         if (!userId) {
             return {
                 statusCode: 401,
-                headers: corsHeaders,
+                headers: getCorsHeaders(requestOrigin),
                 body: JSON.stringify({
                     message: 'Unauthorized - valid authentication required',
                 }),
@@ -41,7 +44,7 @@ export const getUserHistory = async (
             console.error('Error fetching user history:', error);
             return {
                 statusCode: 500,
-                headers: corsHeaders,
+                headers: getCorsHeaders(requestOrigin),
                 body: JSON.stringify({
                     message: 'Error retrieving user history',
                     error: error.message,
@@ -78,15 +81,16 @@ export const getUserHistory = async (
 
         return {
             statusCode: 200,
-            headers: corsHeaders,
+            headers: getCorsHeaders(requestOrigin),
             body: JSON.stringify(historyWithProducts),
         };
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
+        // In the catch block, we don't have access to requestOrigin, so use default CORS headers
         return {
             statusCode: 500,
-            headers: corsHeaders,
+            headers: getCorsHeaders(),
             body: JSON.stringify({
                 message: 'Error processing user history request',
                 error: errorMessage,
@@ -102,6 +106,9 @@ export const clearUserHistory = async (
     event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
     try {
+        // Get the request origin from the headers
+        const requestOrigin = event.headers?.origin || event.headers?.Origin;
+        
         // Extract user ID from authorization header
         const authHeader = event.headers?.Authorization || event.headers?.authorization;
         const userId = await getUserIdFromToken(authHeader);
@@ -109,7 +116,7 @@ export const clearUserHistory = async (
         if (!userId) {
             return {
                 statusCode: 401,
-                headers: corsHeaders,
+                headers: getCorsHeaders(requestOrigin),
                 body: JSON.stringify({
                     message: 'Unauthorized - valid authentication required',
                 }),
@@ -123,7 +130,7 @@ export const clearUserHistory = async (
             console.error('Error clearing user history:', error);
             return {
                 statusCode: 500,
-                headers: corsHeaders,
+                headers: getCorsHeaders(requestOrigin),
                 body: JSON.stringify({
                     message: 'Error clearing user history',
                     error: error.message,
@@ -133,7 +140,7 @@ export const clearUserHistory = async (
 
         return {
             statusCode: 200,
-            headers: corsHeaders,
+            headers: getCorsHeaders(requestOrigin),
             body: JSON.stringify({
                 message: 'User history cleared successfully',
             }),
@@ -141,9 +148,10 @@ export const clearUserHistory = async (
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
+        // In the catch block, we don't have access to requestOrigin, so use default CORS headers
         return {
             statusCode: 500,
-            headers: corsHeaders,
+            headers: getCorsHeaders(),
             body: JSON.stringify({
                 message: 'Error processing clear history request',
                 error: errorMessage,

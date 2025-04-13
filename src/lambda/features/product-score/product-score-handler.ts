@@ -5,7 +5,7 @@ import { calculateSustainabilityScore, SustainabilityTip } from './sustainabilit
 import { getCachedProduct, cacheProductData } from './product-cache';
 import { getUserIdFromToken, saveToUserHistory } from '../../utils/supabase-client';
 
-import { corsHeaders } from '../../utils/cors-headers';
+import { getCorsHeaders } from '../../utils/cors-headers';
 
 export const getProductScore = async (
     event: APIGatewayProxyEvent
@@ -15,11 +15,14 @@ export const getProductScore = async (
 
         // Log headers to debug authentication issues
         console.log('Request headers:', JSON.stringify(event.headers));
+        
+        // Get the request origin from the headers
+        const requestOrigin = event.headers?.origin || event.headers?.Origin;
 
         if (!url || typeof url !== 'string' || !validateAmazonUrl(url)) {
             return {
                 statusCode: 400,
-                headers: corsHeaders,
+                headers: getCorsHeaders(requestOrigin),
                 body: JSON.stringify({
                     message: 'Invalid Amazon product URL',
                     details: {
@@ -111,7 +114,7 @@ export const getProductScore = async (
 
             return {
                 statusCode: 200,
-                headers: corsHeaders,
+                headers: getCorsHeaders(requestOrigin),
                 body: JSON.stringify({
                     productId: productData.productId,
                     title: productData.title,
@@ -128,7 +131,7 @@ export const getProductScore = async (
 
             return {
                 statusCode: 500,
-                headers: corsHeaders,
+                headers: getCorsHeaders(requestOrigin),
                 body: JSON.stringify({
                     message: 'Error processing product data',
                     error: errorMessage,
@@ -165,9 +168,10 @@ export const getProductScore = async (
         const errorMessage =
             topLevelError instanceof Error ? topLevelError.message : 'Unknown error';
 
+        // In the catch block, we don't have access to requestOrigin, so use default CORS headers
         return {
             statusCode: 500,
-            headers: corsHeaders,
+            headers: getCorsHeaders(),
             body: JSON.stringify({
                 message: 'Critical error processing request',
                 error: errorMessage,
