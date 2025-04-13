@@ -247,15 +247,14 @@ export async function calculateSustainabilityScore(
       3. Search for "[Brand Name] manufacturing process" or "[Brand Name] supply chain transparency" 
       4. Search for "[Brand Name] product lifecycle" or "[Product Name] durability testing"
       5. Search for "[Brand Name] sustainability certifications" or "[Product Name] eco certifications"
-      
       Use the search results to find concrete evidence for your assessment. When using information from web search:
-      - IMPORTANT: For EACH piece of information from web search, include the exact URL source in [brackets]
-      - Format citations as: [Source: URL]
-      - List ALL search sources used at the end of your response in a "Sources Used" section
-      - Include the exact search queries you used to find information
+      - DO NOT include any source citations in your response
+      - DO NOT include [Source: URL] or any similar format in your bullet points
+      - DO NOT include a "Sources Used" section in your response
       - Prioritize recent information (within the last 2 years if possible)
       - Compare multiple sources to verify claims when possible
       - Be specific about which certifications or initiatives you found
+      - Present all information as direct statements without any source references
       
       Remember to:
       - Use the scoring ranges as your primary guide

@@ -13,6 +13,15 @@ import { getUserHistory, clearUserHistory } from './features/user-history/user-h
 // Import shared CORS headers
 import { corsHeaders } from './utils/cors-headers';
 
+// API key validation using environment variable
+const VALID_API_KEYS = process.env.API_KEYS ? process.env.API_KEYS.split(',') : [];
+
+// Function to validate API key
+const validateApiKey = (apiKey: string | undefined): boolean => {
+    if (!apiKey) return false;
+    return VALID_API_KEYS.includes(apiKey);
+};
+
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
         // Log full event for debugging
