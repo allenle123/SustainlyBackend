@@ -2,8 +2,6 @@ import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
-import * as path from 'path';
-import * as dotenv from 'dotenv';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
@@ -44,6 +42,7 @@ export class LambdaStack extends cdk.Stack {
                 GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
                 SUPABASE_URL: process.env.SUPABASE_URL || '',
                 SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
+                API_KEYS: process.env.API_KEYS || '',
             },
             memorySize: 1024, // Increased from 512MB to 1024MB for better performance
             timeout: cdk.Duration.seconds(60), // Increased from 30 seconds to 60 seconds

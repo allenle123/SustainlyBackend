@@ -10,8 +10,17 @@ import { getProductScore } from './features/product-score/product-score-handler'
 // import { getAlternativeProducts } from './features/alternative-products/alternative-products-handler';
 import { getUserHistory, clearUserHistory } from './features/user-history/user-history-handler';
 
-// Import shared CORS headers
-import { corsHeaders } from './utils/cors-headers';
+// Import CORS headers utility
+import { getCorsHeaders } from './utils/cors-headers';
+
+// API key validation using environment variable
+const VALID_API_KEYS = process.env.API_KEYS ? process.env.API_KEYS.split(',') : [];
+
+// Function to validate API key
+const validateApiKey = (apiKey: string | undefined): boolean => {
+    if (!apiKey) return false;
+    return VALID_API_KEYS.includes(apiKey);
+};
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
@@ -23,8 +32,33 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             console.error('Received undefined event');
             return {
                 statusCode: 400,
-                headers: corsHeaders,
+                headers: getCorsHeaders(),
                 body: JSON.stringify({ message: 'Invalid request: No event data' }),
+            };
+        }
+        
+        // Get the request origin from the headers
+        const requestOrigin = event.headers?.origin || event.headers?.Origin;
+
+        // Validate API key for non-OPTIONS requests
+        // Skip validation if the request comes from API Gateway (it already validated the key)
+        const apiKey = event.headers?.['x-api-key'] || event.headers?.['X-Api-Key'];
+        const isFromApiGateway = !!event.requestContext?.apiId;
+        
+        // Enhanced logging for API key validation
+        console.log('API Key Validation:', {
+            receivedApiKey: apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'none',
+            isFromApiGateway,
+            validationRequired: !isFromApiGateway,
+            validationResult: isFromApiGateway ? 'skipped' : validateApiKey(apiKey)
+        });
+        
+        if (event.httpMethod !== 'OPTIONS' && !isFromApiGateway && !validateApiKey(apiKey)) {
+            console.warn('Invalid or missing API key');
+            return {
+                statusCode: 403,
+                headers: getCorsHeaders(requestOrigin),
+                body: JSON.stringify({ message: 'Forbidden: Invalid or missing API key' }),
             };
         }
 
@@ -39,7 +73,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         if (method === 'OPTIONS') {
             return {
                 statusCode: 200,
-                headers: corsHeaders,
+                headers: getCorsHeaders(requestOrigin),
                 body: '',
             };
         }
@@ -57,7 +91,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             console.warn('Unhandled route:', { path, method });
             return {
                 statusCode: 404,
-                headers: corsHeaders,
+                headers: getCorsHeaders(requestOrigin),
                 body: JSON.stringify({
                     message: 'Not Found',
                     details: { path, method },
@@ -73,7 +107,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
         return {
             statusCode: 500,
-            headers: corsHeaders,
+            headers: getCorsHeaders(),
             body: JSON.stringify({
                 message: 'Internal Server Error',
                 error: error instanceof Error ? error.message : 'Unknown error',
