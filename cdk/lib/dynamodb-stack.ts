@@ -9,7 +9,7 @@ export class DynamoDBStack extends cdk.Stack {
         super(scope, id, props);
 
         this.table = new dynamodb.Table(this, 'SustainabilityProductsTable', {
-            tableName: 'SustainabilityScores',
+            tableName: 'SustainabilityScores-Dev',
             partitionKey: {
                 name: 'productId',
                 type: dynamodb.AttributeType.STRING,

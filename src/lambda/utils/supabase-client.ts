@@ -12,6 +12,11 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// Get the appropriate table name based on environment
+export const getUserHistoryTable = (): string => {
+    return process.env.SUPABASE_TABLE || 'user_history';
+};
+
 /**
  * Save a product to user history
  * @param userId The user's ID
@@ -28,8 +33,9 @@ export const saveToUserHistory = async (
         console.log('Product details:', { productId, productUrl });
 
         // Use upsert to handle both insert and update in one operation
-        console.log('Upserting history entry');
-        const { data, error } = await supabase.from('user_history').upsert(
+        const historyTable = getUserHistoryTable();
+        console.log(`Upserting history entry to ${historyTable} table`);
+        const { data, error } = await supabase.from(historyTable).upsert(
             {
                 user_id: userId,
                 product_id: productId,

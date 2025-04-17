@@ -8,7 +8,7 @@ import { ApiStack } from '../lib/api-stack';
 const app = new cdk.App();
 
 // Create DynamoDB stack
-const dynamoDBStack = new DynamoDBStack(app, 'SustainlyDynamoDBStack', {
+const dynamoDBStack = new DynamoDBStack(app, 'Sustainly-Dev-DynamoDBStack', {
     env: {
         account: process.env.CDK_DEFAULT_ACCOUNT,
         region: process.env.CDK_DEFAULT_REGION,
@@ -16,7 +16,7 @@ const dynamoDBStack = new DynamoDBStack(app, 'SustainlyDynamoDBStack', {
 });
 
 // Create Lambda stack with DynamoDB table
-const lambdaStack = new LambdaStack(app, 'SustainlyLambdaStack', {
+const lambdaStack = new LambdaStack(app, 'Sustainly-Dev-LambdaStack', {
     env: {
         account: process.env.CDK_DEFAULT_ACCOUNT,
         region: process.env.CDK_DEFAULT_REGION,
@@ -24,11 +24,11 @@ const lambdaStack = new LambdaStack(app, 'SustainlyLambdaStack', {
     dynamoDBTable: dynamoDBStack.table,
 });
 
-// Create API Gateway stack
-new ApiStack(app, 'SustainlyApiStack', {
+// Create API Gateway stack for development
+new ApiStack(app, 'Sustainly-Dev-ApiStack', {
     env: {
         account: process.env.CDK_DEFAULT_ACCOUNT,
         region: process.env.CDK_DEFAULT_REGION,
     },
-    lambdaFunction: lambdaStack.function,
+    lambdaFunction: lambdaStack.function, // Development Lambda
 });

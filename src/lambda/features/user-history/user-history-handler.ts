@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { getUserIdFromToken, supabase } from '../../utils/supabase-client';
+import { getUserIdFromToken, supabase, getUserHistoryTable } from '../../utils/supabase-client';
 import { getCachedProduct } from '../product-score/product-cache';
 
 import { getCorsHeaders } from '../../utils/cors-headers';
@@ -32,10 +32,11 @@ export const getUserHistory = async (
         }
 
         // Get user history from Supabase
-        console.log(`Fetching history for user ${userId}`);
+        const historyTable = getUserHistoryTable();
+        console.log(`Fetching history for user ${userId} from ${historyTable} table`);
 
         const { data: historyItems, error } = await supabase
-            .from('user_history')
+            .from(historyTable)
             .select('*')
             .eq('user_id', userId)
             .order('updated_at', { ascending: false });
@@ -124,7 +125,9 @@ export const clearUserHistory = async (
         }
 
         // Delete all history items for this user
-        const { error } = await supabase.from('user_history').delete().eq('user_id', userId);
+        const historyTable = getUserHistoryTable();
+        console.log(`Clearing history for user ${userId} from ${historyTable} table`);
+        const { error } = await supabase.from(historyTable).delete().eq('user_id', userId);
 
         if (error) {
             console.error('Error clearing user history:', error);
