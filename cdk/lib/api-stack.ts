@@ -19,7 +19,7 @@ export class ApiStack extends cdk.Stack {
             restApiName: 'Sustainly API Dev',
             description: 'API for Sustainly product sustainability services (Development)',
             defaultCorsPreflightOptions: {
-                allowOrigins: ['http://localhost:8081', 'https://sustainly-six.vercel.app', 'https://www.sustainly.fyi'], // Specific allowed origins
+                allowOrigins: ['http://localhost:8081'], // Only allow localhost for development
                 allowMethods: apigateway.Cors.ALL_METHODS,
                 allowHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'X-Amz-Date', 'X-Api-Key', 'X-Amz-Security-Token'],
                 allowCredentials: true,

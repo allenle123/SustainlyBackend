@@ -168,10 +168,13 @@ export const getProductScore = async (
         const errorMessage =
             topLevelError instanceof Error ? topLevelError.message : 'Unknown error';
 
-        // In the catch block, we don't have access to requestOrigin, so use default CORS headers
+        // Get the request origin from the headers, even in the catch block
+        const requestOrigin = event.headers?.origin || event.headers?.Origin;
+        console.log('Error occurred. Request origin:', requestOrigin);
+        
         return {
             statusCode: 500,
-            headers: getCorsHeaders(),
+            headers: getCorsHeaders(requestOrigin),
             body: JSON.stringify({
                 message: 'Critical error processing request',
                 error: errorMessage,

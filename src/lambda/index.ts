@@ -105,9 +105,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             errorDetails: error,
         });
 
+        // Get the request origin from the headers, even in the catch block
+        const requestOrigin = event.headers?.origin || event.headers?.Origin;
+        console.log('Error occurred in main handler. Request origin:', requestOrigin);
+
         return {
             statusCode: 500,
-            headers: getCorsHeaders(),
+            headers: getCorsHeaders(requestOrigin),
             body: JSON.stringify({
                 message: 'Internal Server Error',
                 error: error instanceof Error ? error.message : 'Unknown error',
